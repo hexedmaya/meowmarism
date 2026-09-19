@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# meowmarism installer - downloads the latest tagged release (not the
+# meowmarism LITE installer - downloads the latest tagged release (not the
 # development branch), installs it under a target directory, and sets up a
 # systemd service running the controller. Safe to re-run: re-running with a
 # newer release upgrades an existing install in place.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/hexedmaya/meowmarism/master/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/meowmarism-official/meowmarism-lite/master/install.sh | bash
 # or download and run it manually after reading it (recommended for
 # anything piped into a shell - see the note at the bottom of the repo README).
 set -euo pipefail
@@ -23,12 +23,12 @@ ok()   { printf "${C_GREEN}==>${C_RESET} %s\n" "$1"; }
 warn() { printf "${C_YELLOW}==>${C_RESET} %s\n" "$1"; }
 die()  { printf "${C_RED}error:${C_RESET} %s\n" "$1" >&2; exit 1; }
 
-REPO="hexedmaya/meowmarism"
+REPO="meowmarism-official/meowmarism-lite"
 INSTALL_DIR="${MEOWMARISM_DIR:-/opt/meowmarism}"
 SERVICE_NAME="${MEOWMARISM_SERVICE:-meowmarism}"
 CONTROLLER_PORT="${MEOWMARISM_PORT:-8090}"
 
-printf "\n${C_PINK}${C_BOLD}  meowmarism${C_RESET}\n"
+printf "\n${C_PINK}${C_BOLD}  meowmarism${C_RESET} ${C_BOLD}LITE${C_RESET}\n"
 printf "${C_DIM}  self-hosted control panel for your Minecraft servers${C_RESET}\n\n"
 
 NODE_MAJOR_NEEDED=20
@@ -240,7 +240,7 @@ if [ "${MEOWMARISM_TRUST_PROXY:-}" = "1" ]; then EXTRA_ENV="${EXTRA_ENV}Environm
 step "Writing $SERVICE_FILE"
 sudo tee "$SERVICE_FILE" > /dev/null <<EOF
 [Unit]
-Description=meowmarism controller
+Description=meowmarism LITE controller
 After=network.target
 
 [Service]

@@ -2,7 +2,7 @@
 
 <img src="assets/logo.svg" alt="meowmarism" height="72">
 
-# meowmarism
+# meowmarism LITE
 
 **A self-hosted control panel for your Minecraft servers**
 
@@ -73,7 +73,7 @@ You generally never touch `MC_SERVER_DIR`/`PANEL_PORT` yourself; they're only re
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hexedmaya/meowmarism/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/meowmarism-official/meowmarism-lite/master/install.sh | bash
 ```
 
 Nothing needs to be installed beforehand, not even Node.js - the script installs it if it's missing (via your distro's package manager: apt, dnf or yum). It also downloads the latest **tagged release** (not the development branch), installs it to `/opt/meowmarism`, sets up a `systemd` service, and asks you to set a username and password for the panel before it prints the URL to open. Re-run the same command later to update - it always pulls whatever the latest release is at that point. The panel shows a dot on the Update page in the sidebar when a newer release exists and can update itself from there.

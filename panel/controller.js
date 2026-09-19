@@ -27,6 +27,7 @@ const updateGuard = require('./lib/updateguard');
 const { createLoginLimiter } = require('./lib/ratelimit');
 const loginLimiter = createLoginLimiter();
 
+const RELEASES_REPO = 'meowmarism-official/meowmarism-lite';
 const DATA_ROOT = process.env.MEOWMARISM_DATA_DIR || path.join(os.homedir(), 'meowmarism');
 const INSTANCES_ROOT = path.join(DATA_ROOT, 'instances');
 const CONTROLLER_PORT = Number(process.env.CONTROLLER_PORT) || 8090;
@@ -416,7 +417,7 @@ async function runningInstanceNames() {
 }
 
 async function fetchLatestTag() {
-  const tags = JSON.parse(await httpsGetText('https://api.github.com/repos/hexedmaya/meowmarism/tags?per_page=100'));
+  const tags = JSON.parse(await httpsGetText(`https://api.github.com/repos/${RELEASES_REPO}/tags?per_page=100`));
   const parse = (t) => (/^v?(\d+)\.(\d+)\.(\d+)$/.exec(t) || []).slice(1).map(Number);
   const valid = tags.map((t) => t.name).filter((n) => parse(n).length === 3);
   valid.sort((a, b) => { const x = parse(a), y = parse(b); return (y[0] - x[0]) || (y[1] - x[1]) || (y[2] - x[2]); });
@@ -427,9 +428,9 @@ async function refreshVersionCache() {
   const cache = { at: Date.now(), tag: null, publishedAt: null, url: null };
   cache.tag = await fetchLatestTag();
   if (cache.tag) {
-    cache.url = `https://github.com/hexedmaya/meowmarism/releases/tag/${cache.tag}`;
+    cache.url = `https://github.com/${RELEASES_REPO}/releases/tag/${cache.tag}`;
     try {
-      const r = JSON.parse(await httpsGetText(`https://api.github.com/repos/hexedmaya/meowmarism/releases/tags/${cache.tag}`));
+      const r = JSON.parse(await httpsGetText(`https://api.github.com/repos/${RELEASES_REPO}/releases/tags/${cache.tag}`));
       cache.publishedAt = r.published_at || null;
     } catch (_) {}
   }
@@ -477,7 +478,7 @@ async function selfUpdate() {
   const tarball = path.join(tmp, 'release.tar.gz');
   updateState.step = 'Downloading';
   if (process.env.MEOW_UPDATE_TARBALL) fs.copyFileSync(process.env.MEOW_UPDATE_TARBALL, tarball);
-  else await downloadFile(`https://github.com/hexedmaya/meowmarism/archive/refs/tags/${tag}.tar.gz`, tarball);
+  else await downloadFile(`https://github.com/${RELEASES_REPO}/archive/refs/tags/${tag}.tar.gz`, tarball);
   updateState.step = 'Checking the download';
   await new Promise((resolve, reject) => {
     const p = spawn('tar', ['-xzf', tarball, '-C', tmp]);
@@ -807,7 +808,7 @@ const server = http.createServer(async (req, res) => {
       version: localVersion,
       latestVersion,
       publishedAt: versionCache?.publishedAt || null,
-      releaseUrl: versionCache?.url || 'https://github.com/hexedmaya/meowmarism/releases/latest',
+      releaseUrl: versionCache?.url || `https://github.com/${RELEASES_REPO}/releases/latest`,
       checkedAt: versionCache?.at || null,
       checkError,
       updateAvailable: !!(localVersion && latestVersion && latestVersion !== localVersion),

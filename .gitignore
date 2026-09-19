@@ -1,6 +1,4 @@
-/.claude/
 /.env
-/website/
+/.claude/
 CLAUDE.md
 TODO.md
-/deploy-website.cmd

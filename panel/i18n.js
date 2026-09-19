@@ -19,7 +19,7 @@
       'Edit': 'Bearbeiten', 'Close': 'Schließen', 'Delete': 'Löschen', 'Download': 'Herunterladen', 'Upload': 'Hochladen', 'Refresh': 'Aktualisieren',
       'Back': 'Zurück', 'Next': 'Weiter', 'Add': 'Hinzufügen', 'Clear': 'Leeren', 'Send': 'Senden', 'Pause': 'Pause', 'Resume': 'Fortsetzen',
       'Password': 'Passwort', 'Username': 'Benutzername', 'Repeat password': 'Passwort wiederholen', 'Remember me': 'Angemeldet bleiben',
-      'meowmarism - login': 'meowmarism - Anmeldung', 'wrong username or password': 'Benutzername oder Passwort falsch',
+      'meowmarism LITE - login': 'meowmarism LITE - Anmeldung', 'wrong username or password': 'Benutzername oder Passwort falsch',
       'No instances yet - create one with the + button above.': 'Noch keine Instanzen - erstelle eine mit dem + oben.',
       'panel not started': 'Panel nicht gestartet', 'starting': 'startet', 'running': 'läuft', 'stopped': 'gestoppt', 'error': 'Fehler',
       'Who can log in, and exactly what each account may do.': 'Wer sich anmelden darf und was jedes Konto genau tun darf.',

@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const API = 'https://api.modrinth.com/v2';
-const UA = 'meowmarism (https://github.com/hexedmaya/meowmarism)';
+const UA = 'meowmarism (https://github.com/meowmarism-official/meowmarism-lite)';
 const MAX_JAR_BYTES = 300 * 1024 * 1024;
 const SAFE_JAR = /^[\w.+\-()[\] ]+\.jar$/;
 
