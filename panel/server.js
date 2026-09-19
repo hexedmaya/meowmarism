@@ -1049,6 +1049,7 @@ function startServer() {
   child.on('error', (err) => {
     serverPhase = 'error';
     broadcast(`--- failed to start server: ${err.message} ---`);
+    if (child && child.pid === undefined) { child = null; startedAt = null; }
     broadcastStatus();
   });
 
@@ -1857,7 +1858,7 @@ function requiredCap(method, p) {
   return 'settings';
 }
 
-const PAGE_ROUTES = new Set(['/', '/overview', '/schedule', '/performance', '/players', '/console', '/settings', '/mods', '/files', '/access', '/backups', '/automation', '/events', '/system']);
+const PAGE_ROUTES = new Set(['/', '/overview', '/manage', '/schedule', '/performance', '/players', '/console', '/settings', '/mods', '/files', '/access', '/backups', '/automation', '/events', '/system']);
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);

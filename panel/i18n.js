@@ -189,6 +189,13 @@
       'That file is not an image': 'Diese Datei ist kein Bild', 'that is not a PNG image': 'Das ist kein PNG-Bild', 'Minecraft needs a 64x64 PNG': 'Minecraft braucht ein 64x64-PNG', 'the image is too large': 'Das Bild ist zu groß',
       'Install Java': 'Java installieren', 'Installing Java...': 'Installiere Java...', 'Java installed': 'Java installiert', 'none': 'keine',
       'installing Java needs the Settings and Files permissions': 'Java installieren braucht die Rechte Einstellungen und Dateien',
+      'Manage': 'Verwalten', 'Manage instance': 'Instanz verwalten', 'resources, server software and removal': 'Ressourcen, Serversoftware und Entfernen', 'Danger zone': 'Gefahrenbereich',
+      'Deleting the instance removes it from the panel and deletes its folder with the world, mods and configuration. The Minecraft server has to be stopped. This cannot be undone.': 'Beim Löschen wird die Instanz aus dem Panel entfernt und ihr Ordner mit Welt, Mods und Konfiguration gelöscht. Der Minecraft-Server muss gestoppt sein. Das lässt sich nicht rückgängig machen.',
+      'Delete instance...': 'Instanz löschen...', 'Delete this instance?': 'Diese Instanz löschen?', 'Also delete its backups': 'Auch die Backups löschen', 'Type the instance name to confirm': 'Zur Bestätigung den Instanznamen eingeben', 'Delete everything': 'Alles löschen',
+      'stop the server before deleting the instance': 'Stoppe den Server, bevor du die Instanz löschst',
+      'this folder is too important to delete from here': 'Dieser Ordner ist zu wichtig, um ihn von hier zu löschen',
+      'this instance folder also contains the panel itself, so it cannot be deleted from the panel': 'Dieser Instanzordner enthält auch das Panel selbst und kann deshalb nicht aus dem Panel gelöscht werden',
+      'this does not look like a Minecraft server folder, nothing was deleted': 'Das sieht nicht wie ein Minecraft-Server-Ordner aus, es wurde nichts gelöscht',
       // units / misc words
       'hours': 'Stunden', 'minutes': 'Minuten', 'min': 'Min', 'sec': 'Sek', 'now': 'jetzt', 'lines': 'Zeilen', 'blocks': 'Blöcke', 'chunks': 'Chunks', 'bytes': 'Bytes', 'list': 'Liste', 'help': 'Hilfe', 'close': 'schließen', 'restart': 'Neustart', 'complete ·': 'abgeschlossen ·',
       
@@ -349,6 +356,7 @@
     de: [
       [/^(\d+) settings$/, '$1 Einstellungen'],
       [/^Every (\d+) min$/, 'Alle $1 Min'],
+      [/^This deletes the folder of "(.+)" with the world, mods and settings\.$/, 'Das löscht den Ordner von "$1" mit Welt, Mods und Einstellungen.'],
       [/^Port (\d+) is in use, (\d+) is free\.$/, 'Port $1 ist belegt, $2 ist frei.'],
       [/^port (\d+) is in use, using (\d+) instead$/, 'Port $1 ist belegt, nehme stattdessen $2'],
       [/^Port (\d+) is already used by another program\. Change the port under Settings \(server-port\) or stop the program that uses it\.$/, 'Port $1 wird schon von einem anderen Programm benutzt. Ändere den Port unter Einstellungen (server-port) oder beende das Programm.'],

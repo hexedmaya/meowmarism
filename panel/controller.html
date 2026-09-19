@@ -566,14 +566,12 @@ async function loadInstances() {
     const status = `<div class="statusline"><span class="dot ${healthDot(i)}"></span>${esc(healthLabel(i))} ${openLink}</div>`
       + (i.health === 'error' && i.crash?.reason ? `<div class="err-msg">${esc(i.crash.reason)}</div>` : '');
     const canManage = i.caps.includes('power');
-    const canRemove = i.caps.includes('remove');
     let actions = '';
     if (canManage) {
       actions = i.running
         ? `<button class="btn danger" data-act="stop" data-id="${esc(i.name)}">Stop</button> <button class="btn" data-act="restart" data-id="${esc(i.name)}">Restart</button>`
         : `<button class="btn primary" data-act="start" data-id="${esc(i.name)}">Start</button>`;
     }
-    if (canRemove && !i.running) actions += ` <button class="btn danger" data-act="remove" data-id="${esc(i.name)}">Remove</button>`;
     const usage = i.running && (i.cpuPercent != null || i.rssMB != null)
       ? `<span class="usage">${i.cpuPercent != null ? `<b>${i.cpuPercent.toFixed(0)}%</b> cpu` : ''}${i.cpuPercent != null && i.rssMB != null ? ' · ' : ''}${i.rssMB != null ? `<b>${(i.rssMB / 1024).toFixed(1)}G</b> ram` : ''}</span>`
       : '<span class="usage">-</span>';
@@ -592,10 +590,6 @@ document.addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-act]');
   if (!btn) return;
   const { act, id } = btn.dataset;
-  if (act === 'remove') {
-    const ok = await modalConfirm('Remove this instance?', 'It disappears from this list, but files on disk are kept.', 'Remove');
-    if (!ok) return;
-  }
   if (act === 'stop' || act === 'restart') {
     const stopping = act === 'stop';
     const ok = await modalConfirm(stopping ? 'Stop this server?' : 'Restart this server?', 'Players will be disconnected' + (stopping ? ' and the world is saved.' : ' while it restarts.'), stopping ? 'Stop' : 'Restart');
@@ -603,10 +597,9 @@ document.addEventListener('click', async (e) => {
   }
   btn.disabled = true;
   try {
-    if (act === 'remove') await fetch(`/api/instances/${id}`, { method: 'DELETE' });
-    else await fetch(`/api/instances/${id}/${act}`, { method: 'POST' });
+    await fetch(`/api/instances/${id}/${act}`, { method: 'POST' });
   } finally {
-    setTimeout(loadInstances, act === 'remove' ? 0 : 800);
+    setTimeout(loadInstances, 800);
   }
 });
 

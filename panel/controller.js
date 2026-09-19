@@ -21,6 +21,7 @@ const { spawn, execFileSync, execFile } = require('child_process');
 const { INSTANCES_FILE } = require('./lib/config');
 const launchLib = require('./lib/launch');
 const net = require('net');
+const { checkDeletableDir } = require('./lib/safety');
 const { parseCookies, currentSession, createSession, deleteSession, sessions, SESSION_COOKIE, SESSION_MAX_AGE_MS } = require('./lib/auth');
 const updateGuard = require('./lib/updateguard');
 const { createLoginLimiter } = require('./lib/ratelimit');
@@ -1128,13 +1129,25 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'DELETE') {
       if (!caps.includes('remove')) { sendJson(res, 403, { ok: false, error: 'not allowed to remove this instance' }); return; }
       (async () => {
+        const wantFiles = url.searchParams.get('files') === '1';
+        const wantBackups = url.searchParams.get('backups') === '1';
         if (workers.has(id)) {
           const status = await fetchWorkerStatus(inst.panelPort);
-          if (status?.running) { sendJson(res, 400, { ok: false, error: 'stop the instance before removing it' }); return; }
-          stopWorker(id);
+          if (status?.running) { sendJson(res, 400, { ok: false, error: 'stop the server before deleting the instance' }); return; }
         }
+        const backupDir = path.join(DATA_ROOT, 'backups', path.basename(path.resolve(inst.dir)));
+        if (wantFiles) {
+          const problem = checkDeletableDir(inst.dir, path.resolve(__dirname, '..'), os.homedir());
+          if (problem) { sendJson(res, 400, { ok: false, error: problem }); return; }
+        }
+        const w = workers.get(id);
+        if (w) await new Promise((resolve) => { const t = setTimeout(resolve, 15000); w.proc.once('exit', () => { clearTimeout(t); resolve(); }); w.proc.kill('SIGTERM'); });
         saveInstances(instances.filter((i) => i.id !== id));
-        sendJson(res, 200, { ok: true, note: 'removed from the registry only - files on disk were left alone' });
+        try {
+          if (wantFiles) fs.rmSync(inst.dir, { recursive: true, force: true });
+          if (wantFiles && wantBackups && backupDir.startsWith(path.join(DATA_ROOT, 'backups') + path.sep)) fs.rmSync(backupDir, { recursive: true, force: true });
+        } catch (err) { sendJson(res, 500, { ok: false, error: `removed from the panel, but deleting the files failed: ${err.message}` }); return; }
+        sendJson(res, 200, { ok: true, deletedFiles: wantFiles, deletedBackups: wantFiles && wantBackups });
       })();
       return;
     }
