@@ -749,20 +749,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const assetMatch = url.pathname.match(/^\/assets\/((?:fonts\/)?[\w.-]+\.(?:woff2|woff|ttf|otf|png|svg))$/);
-  if (assetMatch && req.method === 'GET') {
-    const file = path.join(__dirname, 'assets', assetMatch[1]);
-    if (!fs.existsSync(file)) { res.writeHead(404); res.end(); return; }
-    const types = { woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf', png: 'image/png', svg: 'image/svg+xml' };
-    res.writeHead(200, { 'Content-Type': types[path.extname(file).slice(1)], 'Cache-Control': 'public, max-age=3600' });
-    fs.createReadStream(file).pipe(res);
-    return;
-  }
 
   const langMatch = req.method === 'GET' && url.pathname.match(/^\/lang\/(de|fr|es)\.json$/);
   if (langMatch) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache' });
     res.end(fs.readFileSync(path.join(__dirname, 'lang', langMatch[1] + '.json')));
+    return;
+  }
+
+  const coreMatch = req.method === 'GET' && url.pathname.match(/^\/core\/(tokens\/tokens\.css|brand\/[\w.-]+\.(?:svg|png))$/);
+  if (coreMatch) {
+    const file = path.join(__dirname, 'core', coreMatch[1]);
+    if (!fs.existsSync(file)) { res.writeHead(404); res.end(); return; }
+    const types = { css: 'text/css; charset=utf-8', svg: 'image/svg+xml', png: 'image/png' };
+    res.writeHead(200, { 'Content-Type': types[path.extname(file).slice(1)], 'Cache-Control': 'public, max-age=3600' });
+    fs.createReadStream(file).pipe(res);
     return;
   }
 
@@ -1014,7 +1015,7 @@ const server = http.createServer(async (req, res) => {
           const builtVersion = await installServerSoftware(loader, mcVersion, loaderVersion, ramMB, dir, createLog, javaBin);
           fs.writeFileSync(path.join(dir, 'eula.txt'), 'eula=true\n');
           fs.writeFileSync(path.join(dir, 'server.properties'), `server-port=${mcPort}\nmotd=hosted by meowmarism :3\n`);
-          try { fs.copyFileSync(path.join(__dirname, 'assets', 'server-icon.png'), path.join(dir, 'server-icon.png')); } catch (_) {}
+          try { fs.copyFileSync(path.join(__dirname, 'core', 'brand', 'server-icon.png'), path.join(dir, 'server-icon.png')); } catch (_) {}
           fs.writeFileSync(path.join(dir, 'panel-config.json'), JSON.stringify({ backupIntervalHours, maxBackups, autoStart: data.autoStart === true, ...(javaBin ? { javaPath: javaBin } : {}) }, null, 2));
           const panelPort = nextFreePort(instances);
           const inst = { id: crypto.randomUUID(), name, dir, port: mcPort, panelPort, mcVersion, loader, loaderVersion: builtVersion || loaderVersion, ramMB, createdAt: Date.now() };

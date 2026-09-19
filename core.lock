@@ -6,6 +6,16 @@
     "LICENSE",
     "CONTRIBUTOR-AGREEMENT.md",
     "CONTRIBUTORS.md",
-    "BRAND-POLICY.md"
+    "BRAND-POLICY.md",
+    "panel/core/brand/logo-mono.svg",
+    "panel/core/brand/logo.svg",
+    "panel/core/brand/png/meowmarism-avatar-512.png",
+    "panel/core/brand/png/meowmarism-logo-2048-dark.png",
+    "panel/core/brand/png/meowmarism-logo-4096-transparent.png",
+    "panel/core/brand/png/meowmarism-logo-transparent-512.png",
+    "panel/core/brand/png/meowmarism-social-1280x640.png",
+    "panel/core/brand/server-icon.png",
+    "panel/core/tokens/tokens.css",
+    "panel/core/tokens/tokens.json"
   ]
 }

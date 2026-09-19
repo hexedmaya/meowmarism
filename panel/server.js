@@ -2485,7 +2485,7 @@ const server = http.createServer((req, res) => {
         const data = JSON.parse(body || '{}');
         const dest = path.join(SERVER_DIR, 'server-icon.png');
         if (data.reset === true) {
-          fs.copyFileSync(path.join(__dirname, 'assets', 'server-icon.png'), dest);
+          fs.copyFileSync(path.join(__dirname, 'core', 'brand', 'server-icon.png'), dest);
         } else {
           const png = Buffer.from(String(data.png || ''), 'base64');
           const isPng = png.length > 33 && png.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));

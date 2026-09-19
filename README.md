@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="meowmarism" height="72">
+<img src="panel/core/brand/logo.svg" alt="meowmarism" height="72">
 
 # meowmarism LITE
 
@@ -49,7 +49,8 @@ panel/
 ├── server.js          worker: manages exactly one Minecraft server (one per instance)
 ├── index.html         worker frontend: the full dashboard for that instance
 ├── i18n.js            UI translations
-├── assets/            default server icon (and fonts, if any)
+├── lang/              translation files
+├── core/              design tokens and brand from meowmarism core (generated copy)
 └── lib/               config, auth, login throttling, backups, scheduler, Modrinth, launch options, update safety net
 ```
 
