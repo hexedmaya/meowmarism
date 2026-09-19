@@ -10,16 +10,6 @@
 # anything piped into a shell - see the note at the bottom of the repo README).
 set -euo pipefail
 
-RESET_OWNER=0
-for arg in "$@"; do
-  case "$arg" in
-    --reset-owner) RESET_OWNER=1 ;;
-    -h|--help) printf 'Usage: install.sh [--reset-owner]\n  --reset-owner  set a new owner username and password on an existing install\n'; exit 0 ;;
-    *) printf 'Unknown option: %s\n' "$arg" >&2; exit 1 ;;
-  esac
-done
-[ "${MEOWMARISM_RESET_OWNER:-}" = "1" ] && RESET_OWNER=1
-
 if [ -t 1 ]; then
   C_PINK='\033[1;35m'; C_CYAN='\033[36m'; C_GREEN='\033[1;32m'
   C_YELLOW='\033[1;33m'; C_RED='\033[1;31m'; C_DIM='\033[2m'; C_BOLD='\033[1m'; C_RESET='\033[0m'
@@ -94,6 +84,57 @@ for f in /etc/systemd/system/*.service; do
   fi
 done
 
+# Asks for the owner account and writes it into the accounts store.
+# MODE "create" (fresh install, before the service starts) or "reset" (existing install).
+set_owner() {
+  local MODE="$1" DIR="$2"
+  if [ -t 0 ]; then TTY=/dev/stdin; else TTY=/dev/tty; fi
+  if [ ! -r "$TTY" ]; then
+    [ "$MODE" = "reset" ] && die "resetting the owner needs a terminal to ask for the new password"
+    warn "No terminal to ask for a login in. Set one from the panel's front page before opening it up to your network."
+    return 0
+  fi
+  if [ "$MODE" = "reset" ]; then step "Reset the owner account"; else step "Create the owner account (needed before the panel starts)"; fi
+  local ADMIN_USER="" ADMIN_PASS="" ADMIN_PASS2=""
+  while true; do
+    printf "    Username (3-32 letters, digits, . _ -): "
+    read -r ADMIN_USER 2>/dev/null < "$TTY" || die "no input available for the owner account"
+    if printf '%s' "$ADMIN_USER" | grep -Eq '^[A-Za-z0-9_.-]{3,32}$'; then break; fi
+    warn "That username isn't valid, try again."
+  done
+  while true; do
+    printf "    Password (min. 8 characters): "
+    stty -echo < "$TTY" 2>/dev/null || true
+    read -r ADMIN_PASS 2>/dev/null < "$TTY" || ADMIN_PASS=""
+    stty echo < "$TTY" 2>/dev/null || true
+    printf "\n"
+    if [ "${#ADMIN_PASS}" -lt 8 ]; then warn "Too short, try again."; continue; fi
+    printf "    Repeat password: "
+    stty -echo < "$TTY" 2>/dev/null || true
+    read -r ADMIN_PASS2 2>/dev/null < "$TTY" || ADMIN_PASS2=""
+    stty echo < "$TTY" 2>/dev/null || true
+    printf "\n"
+    if [ "$ADMIN_PASS" = "$ADMIN_PASS2" ]; then break; fi
+    warn "The passwords don't match, try again."
+  done
+  if printf '%s\n%s\n' "$ADMIN_USER" "$ADMIN_PASS" | OWNER_MODE="$MODE" node -e "
+    const { createUserStore } = require('${DIR}/panel/lib/db.js');
+    const os = require('os'), path = require('path'), fs = require('fs');
+    const [user, pass] = fs.readFileSync(0, 'utf8').split('\n');
+    const store = createUserStore(path.join(os.homedir(), '.meowmarism-controller-users.json'));
+    if (process.env.OWNER_MODE === 'reset') {
+      store.resetOwner(user, pass);
+      try { fs.unlinkSync(path.join(os.homedir(), '.meowmarism-sessions.json')); } catch (_) {}
+      process.exit(0);
+    }
+    process.exit(store.hasOwner() || store.upsertOwner(user, pass) ? 0 : 1);
+  "; then
+    if [ "$MODE" = "reset" ]; then ok "Owner account is now '${ADMIN_USER}'. All sessions were signed out."; else ok "Owner account '${ADMIN_USER}' created."; fi
+  else
+    die "couldn't set the owner account"
+  fi
+}
+
 if [ -n "$EXISTING_SERVICE" ]; then
   step "Found an existing install: service '${C_PINK}${EXISTING_SERVICE}${C_RESET}' at ${C_PINK}${EXISTING_DIR}${C_RESET}"
   INSTALLED_VERSION="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$EXISTING_DIR/package.json" 2>/dev/null | head -1)"
@@ -108,11 +149,15 @@ if [ -n "$EXISTING_SERVICE" ]; then
   choice=""
   if [ -r "$TTY" ]; then
     if [ "$UPDATE_AVAILABLE" = "1" ]; then
-      printf "    ${C_YELLOW}[U]${C_RESET}pdate / ${C_YELLOW}[R]${C_RESET}emove / ${C_YELLOW}[C]${C_RESET}ancel? "
+      printf "    ${C_YELLOW}[U]${C_RESET}pdate / ${C_YELLOW}[M]${C_RESET}ore options / ${C_YELLOW}[C]${C_RESET}ancel? "
     else
-      printf "    ${C_YELLOW}[R]${C_RESET}emove / ${C_YELLOW}[C]${C_RESET}ancel? "
+      printf "    ${C_YELLOW}[M]${C_RESET}ore options / ${C_YELLOW}[C]${C_RESET}ancel? "
     fi
     read -r choice 2>/dev/null < "$TTY" || choice="c"
+    if [ "${choice:0:1}" = "m" ] || [ "${choice:0:1}" = "M" ]; then
+      printf "    ${C_YELLOW}[O]${C_RESET}wner reset / ${C_YELLOW}[R]${C_RESET}emove / ${C_YELLOW}[C]${C_RESET}ancel? "
+      read -r choice 2>/dev/null < "$TTY" || choice="c"
+    fi
   fi
   case "${choice:0:1}" in
     [Rr])
@@ -160,6 +205,11 @@ if [ -n "$EXISTING_SERVICE" ]; then
       ok "Uninstalled."
       exit 0
       ;;
+    [Oo])
+      set_owner reset "$EXISTING_DIR"
+      sudo systemctl restart "$EXISTING_SERVICE"
+      exit 0
+      ;;
     [Cc]|"")
       warn "Cancelled - nothing changed."
       exit 0
@@ -201,54 +251,7 @@ ALREADY_INSTALLED=0
 # yet is a real (if brief) open window on a real network; writing the
 # account straight into its store first means there is no such window at
 # all, not just a short one.
-if [ "$ALREADY_INSTALLED" = "0" ] || [ "$RESET_OWNER" = "1" ]; then
-  if [ -t 0 ]; then TTY=/dev/stdin; else TTY=/dev/tty; fi
-  if [ -r "$TTY" ]; then
-    if [ "$RESET_OWNER" = "1" ]; then step "Reset the owner account"; else step "Create the owner account (needed before the panel starts)"; fi
-    ADMIN_USER=""; ADMIN_PASS=""
-    while true; do
-      printf "    Username (3-32 letters, digits, . _ -): "
-      read -r ADMIN_USER 2>/dev/null < "$TTY" || die "no input available for the owner account"
-      if printf '%s' "$ADMIN_USER" | grep -Eq '^[A-Za-z0-9_.-]{3,32}$'; then break; fi
-      warn "That username isn't valid, try again."
-    done
-    while true; do
-      printf "    Password (min. 8 characters): "
-      stty -echo < "$TTY" 2>/dev/null || true
-      read -r ADMIN_PASS 2>/dev/null < "$TTY" || ADMIN_PASS=""
-      stty echo < "$TTY" 2>/dev/null || true
-      printf "\n"
-      if [ "${#ADMIN_PASS}" -lt 8 ]; then warn "Too short, try again."; continue; fi
-      printf "    Repeat password: "
-      stty -echo < "$TTY" 2>/dev/null || true
-      read -r ADMIN_PASS2 2>/dev/null < "$TTY" || ADMIN_PASS2=""
-      stty echo < "$TTY" 2>/dev/null || true
-      printf "\n"
-      if [ "$ADMIN_PASS" = "$ADMIN_PASS2" ]; then break; fi
-      warn "The passwords don't match, try again."
-    done
-    if printf '%s\n%s\n' "$ADMIN_USER" "$ADMIN_PASS" | RESET_OWNER="$RESET_OWNER" node -e "
-      const { createUserStore } = require('${INSTALL_DIR}/panel/lib/db.js');
-      const os = require('os'), path = require('path'), fs = require('fs');
-      const [user, pass] = fs.readFileSync(0, 'utf8').split('\n');
-      const store = createUserStore(path.join(os.homedir(), '.meowmarism-controller-users.json'));
-      if (process.env.RESET_OWNER === '1') {
-        store.resetOwner(user, pass);
-        try { fs.unlinkSync(path.join(os.homedir(), '.meowmarism-sessions.json')); } catch (_) {}
-        process.exit(0);
-      }
-      process.exit(store.hasOwner() || store.upsertOwner(user, pass) ? 0 : 1);
-    "; then
-      if [ "$RESET_OWNER" = "1" ]; then ok "Owner account is now '${ADMIN_USER}'. All sessions were signed out."; else ok "Owner account '${ADMIN_USER}' created."; fi
-    else
-      die "couldn't set the owner account"
-    fi
-  elif [ "$RESET_OWNER" = "1" ]; then
-    die "--reset-owner needs a terminal to ask for the new password"
-  else
-    warn "No terminal to ask for a login in. Set one from the panel's front page before opening it up to your network."
-  fi
-fi
+if [ "$ALREADY_INSTALLED" = "0" ]; then set_owner create "$INSTALL_DIR"; fi
 
 EXTRA_ENV=""
 NL=$'\n'
