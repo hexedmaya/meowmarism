@@ -1,0 +1,17 @@
+{
+  "name": "meowmarism",
+  "version": "0.0.0",
+  "description": "Self-hosted control panel for your Minecraft servers",
+  "private": true,
+  "main": "panel/server.js",
+  "scripts": {
+    "start": "node panel/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hexedmaya/meowmarism.git"
+  }
+}

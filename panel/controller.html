@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2026%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ff6fc4%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20role%3D%22img%22%20aria-label%3D%22meowmarism%22%3E%3Cpath%20d%3D%22M3.2%204.7%20C3.2%203.29%204.82%202.5%205.94%203.36%20L13%208.83%20L20.06%203.36%20C21.18%202.5%2022.8%203.29%2022.8%204.7%20L22.8%2018.4%20C22.8%2020.58%2020.28%2021.79%2018.57%2020.42%20L13%2015.96%20L7.43%2020.42%20C5.72%2021.79%203.2%2020.58%203.2%2018.4%20Z%22%2F%3E%3Cpath%20d%3D%22M12.08%2014.59%20C12.08%2014.26%2012.35%2014.06%2012.74%2014.06%20H13.26%20C13.65%2014.06%2013.92%2014.26%2013.92%2014.59%20C13.92%2014.85%2013.79%2015.04%2013.59%2015.24%20L13%2015.83%20L12.41%2015.24%20C12.21%2015.04%2012.08%2014.85%2012.08%2014.59%20Z%22%20fill%3D%22%23ff6fc4%22%20stroke%3D%22none%22%2F%3E%3Cpath%20d%3D%22M6.3%2012.7%20L9.6%2013.7%22%20stroke-width%3D%221.3%22%2F%3E%3Cpath%20d%3D%22M6.3%2015.5%20L9.6%2014.9%22%20stroke-width%3D%221.3%22%2F%3E%3Cpath%20d%3D%22M19.7%2012.7%20L16.4%2013.7%22%20stroke-width%3D%221.3%22%2F%3E%3Cpath%20d%3D%22M19.7%2015.5%20L16.4%2014.9%22%20stroke-width%3D%221.3%22%2F%3E%3C%2Fsvg%3E">
+<title>meowmarism</title>
+<style>
+  :root { --font-brand: inherit; --bg:#101113; --panel:#17191d; --panel2:#1c1f23; --line:#292d32; --text:#e7e9ec; --muted:#9299a3; --green:#58b978; --red:#d76767; --yellow:#d4a84f; --accent:#ff6fc4; --radius:6px; --sidebar:56px; --sidebar-open:208px; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 Inter, ui-sans-serif, -apple-system, "Segoe UI", sans-serif; }
+
+  /* --- sidebar: icon rail, expands on hover to show labels --- */
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar); background: var(--panel);
+    border-right: 1px solid var(--line); display: flex; flex-direction: column; z-index: 20;
+    overflow: hidden; transition: width .15s ease; }
+  .sidebar:hover { width: var(--sidebar-open); }
+  .side-brand { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 15.6px; border-bottom: 1px solid var(--line); overflow: hidden; flex: 0 0 auto; }
+  .brand-logo { flex: 0 0 auto; color: var(--accent); }
+  .side-brand-text { opacity: 0; transition: opacity .1s ease; overflow: hidden; min-width: 0; }
+  .sidebar:hover .side-brand-text { opacity: 1; }
+  .side-brand-name, .wordmark { font-family: var(--font-brand); }
+  .side-brand-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .side-brand-sub { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+
+  .side-top { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+
+  .side-meta { padding: 0 17px 8px; font-size: 10px; color: var(--dim, var(--muted)); white-space: nowrap; overflow: hidden;
+    opacity: 0; transition: opacity .1s ease; }
+  .sidebar:hover .side-meta { opacity: 1; }
+  .side-meta a { color: var(--dim, var(--muted)); text-decoration: underline; }
+  .side-meta a:hover { color: var(--text); }
+  .side-item { position: relative; display: flex; align-items: center; gap: 14px; height: 42px; padding: 0 18.5px; color: var(--muted);
+    text-decoration: none; cursor: pointer; white-space: nowrap; border: none; background: none; width: 100%; font: inherit; font-size: 12.5px; }
+  .side-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  .side-item.active { color: var(--text); background: rgba(255,111,196,.1); box-shadow: inset 2px 0 0 var(--accent); }
+  .side-item svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .side-item.gh svg { fill: currentColor; stroke: none; }
+  .side-label { opacity: 0; transition: opacity .1s ease; }
+  .sidebar:hover .side-label { opacity: 1; }
+  .side-dot { position: absolute; top: 9px; left: 15px; width: 7px; height: 7px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 0 2px var(--panel); }
+  .side-pill { margin-left: auto; opacity: 0; transition: opacity .1s ease; font-size: 10px; padding: 1px 7px; border-radius: 999px; background: rgba(212,168,79,.16); color: var(--yellow); white-space: nowrap; }
+  .sidebar:hover .side-pill { opacity: 1; }
+
+  .side-bottom { border-top: 1px solid var(--line); padding: 8px 0; }
+  .side-account { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 14.5px; overflow: hidden; }
+  .side-avatar { width: 26px; height: 26px; border-radius: 50%; background: #26364a; color: #dcecff; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; text-transform: uppercase; }
+  .side-account-info { opacity: 0; transition: opacity .1s ease; overflow: hidden; min-width: 0; }
+  .sidebar:hover .side-account-info { opacity: 1; }
+  .side-account-name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .side-account-role { font-size: 10.5px; color: var(--dim, var(--muted)); text-transform: capitalize; }
+
+  .main { margin-left: var(--sidebar); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .topbar { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 4px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 13px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; }
+  .card-title { font-size: 13px; font-weight: 650; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .btn { height: 29px; padding: 0 11px; border: 1px solid #343940; border-radius: 4px; background: #1b1e22; color: var(--text); cursor: pointer; font-size: 11.5px; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn:hover { background: #23272d; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.primary { background: #26364a; border-color: #36506c; color: #dcecff; }
+  .btn.danger { color: #f1a0a0; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; flex: 0 0 auto; }
+  .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.off { background: #5a6068; }
+  .dot.err { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .dot.mid { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  input, select { background: #0c0e12; border: 1px solid var(--line); color: var(--text); padding: 7px 10px; border-radius: 5px; font-size: 12.5px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .usage { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+  .usage b { color: var(--text); font-weight: 600; }
+  .statusline { display: flex; align-items: center; gap: 6px; }
+  .err-msg { color: var(--red); font-size: 11.5px; margin-top: 3px; max-width: 320px; white-space: normal; }
+
+  .addbtn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #36506c; background: #26364a; color: #dcecff;
+    font-size: 18px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .addbtn:hover { background: #2e4258; }
+
+  .wizard-back { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: flex-start; justify-content: center; padding: 60px 20px; z-index: 30; }
+  .wizard-back.open { display: flex; }
+  .wizard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 22px; width: 440px; max-width: 100%; }
+  .wizard h2 { font-size: 15px; margin: 0 0 3px; }
+  .wizard .step-hint { color: var(--muted); font-size: 12px; margin: 0 0 18px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .field input, .field select { width: 100%; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+  .steps { display: flex; gap: 5px; margin-bottom: 18px; }
+  .steps span { height: 3px; flex: 1; border-radius: 2px; background: var(--line); }
+  .steps span.done { background: #36506c; }
+  .wizard-actions { display: flex; justify-content: space-between; margin-top: 18px; }
+
+  .progress-track { height: 6px; border-radius: 3px; background: #0c0e12; overflow: hidden; margin: 4px 0 14px; }
+  .progress-fill { height: 100%; background: #36506c; transition: width .4s ease; border-radius: 3px; }
+  .progress-fill.done { background: var(--green); }
+  .progress-fill.err { background: var(--red); }
+  .console { background: #0c0e12; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px;
+    height: 220px; overflow-y: auto; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px;
+    line-height: 1.6; color: #b7bec9; white-space: pre-wrap; word-break: break-word; }
+  .console .err-line { color: var(--red); }
+  .wizard.wide { width: 560px; }
+
+  /* --- shared modal (replaces alert()/confirm()) --- */
+  .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 40; padding: 20px; }
+  .modal-back.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; width: 340px; max-width: 100%; }
+  .modal-title { font-size: 14.5px; font-weight: 650; margin: 0 0 8px; }
+  .modal-msg { color: var(--muted); font-size: 12.5px; line-height: 1.55; margin: 0 0 18px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  .perm-title { font-size: 12px; font-weight: 650; margin: 14px 0 8px; }
+  .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; }
+  .perm-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+  .perm-item input { width: auto; margin: 0; }
+  .modal.wide { width: 560px; max-height: calc(100vh - 40px); overflow-y: auto; }
+  .kv-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-key { color: var(--muted); }
+  .kv-val { color: var(--text); font-weight: 600; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 650; }
+  .badge.ok { background: rgba(88,185,120,.14); color: var(--green); }
+  .badge.new { background: rgba(212,168,79,.16); color: var(--yellow); }
+
+  /* --- nicer remember-me toggle --- */
+  .http-warn { display: none; margin: 0 0 14px; padding: 10px 14px; border: 1px solid #6b5420; background: rgba(212,168,79,.1); color: var(--yellow); border-radius: 8px; font-size: 12.5px; line-height: 1.5; }
+  .toggle-row { display: flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; }
+  .toggle { position: relative; width: 34px; height: 19px; flex: 0 0 auto; }
+  .toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .toggle-track { position: absolute; inset: 0; background: #0c0e12; border: 1px solid var(--line); border-radius: 999px; transition: background .15s ease, border-color .15s ease; }
+  .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 13px; height: 13px; border-radius: 50%; background: var(--muted); transition: transform .15s ease, background .15s ease; }
+  .toggle input:checked ~ .toggle-track { background: rgba(54,80,108,.35); border-color: #36506c; }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(15px); background: #dcecff; }
+</style>
+<script src="/i18n.js"></script>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="side-brand">
+    <svg class="brand-logo" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="meowmarism"><path d="M3.2 4.7 C3.2 3.29 4.82 2.5 5.94 3.36 L13 8.83 L20.06 3.36 C21.18 2.5 22.8 3.29 22.8 4.7 L22.8 18.4 C22.8 20.58 20.28 21.79 18.57 20.42 L13 15.96 L7.43 20.42 C5.72 21.79 3.2 20.58 3.2 18.4 Z"/><path d="M12.08 14.59 C12.08 14.26 12.35 14.06 12.74 14.06 H13.26 C13.65 14.06 13.92 14.26 13.92 14.59 C13.92 14.85 13.79 15.04 13.59 15.24 L13 15.83 L12.41 15.24 C12.21 15.04 12.08 14.85 12.08 14.59 Z" fill="currentColor" stroke="none"/><path d="M6.3 12.7 L9.6 13.7" stroke-width="1.3"/><path d="M6.3 15.5 L9.6 14.9" stroke-width="1.3"/><path d="M19.7 12.7 L16.4 13.7" stroke-width="1.3"/><path d="M19.7 15.5 L16.4 14.9" stroke-width="1.3"/></svg>
+    <div class="side-brand-text">
+      <div class="side-brand-name">meowmarism</div>
+      <div class="side-brand-sub">Official version</div>
+    </div>
+  </div>
+  <div class="side-top">
+    <button class="side-item active" data-page="server" title="Server">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><line x1="7" y1="7.5" x2="7.01" y2="7.5"/><line x1="7" y1="16.5" x2="7.01" y2="16.5"/></svg>
+      <span class="side-label">Server</span>
+    </button>
+    <button class="side-item" data-page="users" id="navUsers" style="display:none" title="Manage users">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="side-label">Manage users</span>
+    </button>
+    <button class="side-item" data-page="settings" id="navSettings" style="display:none" title="Settings">
+      <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      <span class="side-label">Settings</span>
+    </button>
+    <button class="side-item" data-page="update" id="navUpdate" title="Update">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <span class="side-label">Update</span>
+      <span class="side-dot" id="updateDot" style="display:none"></span>
+      <span class="side-pill" id="updatePill" style="display:none">new</span>
+    </button>
+    <button class="side-item gh" id="navGh" title="GitHub">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.5 0 12.3c0 5.43 3.44 10.03 8.21 11.66.6.11.82-.27.82-.6 0-.29-.01-1.06-.02-2.08-3.34.75-4.04-1.65-4.04-1.65-.55-1.42-1.33-1.81-1.33-1.81-1.09-.77.08-.75.08-.75 1.2.09 1.84 1.26 1.84 1.26 1.07 1.87 2.8 1.33 3.49 1.02.11-.79.42-1.33.76-1.64-2.67-.31-5.47-1.37-5.47-6.1 0-1.35.47-2.45 1.24-3.31-.12-.31-.54-1.57.12-3.28 0 0 1.01-.33 3.3 1.27a11.2 11.2 0 0 1 6 0c2.29-1.6 3.3-1.27 3.3-1.27.66 1.71.24 2.97.12 3.28.77.86 1.24 1.96 1.24 3.31 0 4.74-2.8 5.79-5.48 6.09.43.38.81 1.13.81 2.28 0 1.64-.02 2.97-.02 3.37 0 .33.22.72.83.6C20.57 22.32 24 17.72 24 12.3 24 5.5 18.63 0 12 0Z"/></svg>
+      <span class="side-label">GitHub</span>
+    </button>
+  </div>
+  <div class="side-bottom">
+    <button class="side-item" data-lang-toggle title="Language">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span class="side-label" data-no-i18n data-lang-label></span>
+    </button>
+    <div class="side-meta">
+      <span id="sideVersion"></span>&copy; hexedmaya &middot; <a href="#" id="sideLicenseLink">License</a>
+    </div>
+    <div class="side-account">
+      <div class="side-avatar" id="sideAvatar">?</div>
+      <div class="side-account-info">
+        <div class="side-account-name" id="sideAccountName">-</div>
+        <div class="side-account-role" id="sideAccountRole"></div>
+      </div>
+    </div>
+    <a class="side-item" href="/auth/logout" id="navLogout" style="display:none" title="Log out">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="side-label">Log out</span>
+    </a>
+  </div>
+</nav>
+
+<div class="main">
+<div class="wrap">
+<div class="http-warn" id="httpWarn">This panel is reached over plain HTTP on a public address, so passwords and sessions can be intercepted. Put it behind HTTPS (see the README).</div>
+
+  <section class="page active" id="page-server">
+    <div class="topbar">
+      <div>
+        <h1 class="wordmark">meowmarism</h1>
+        <p class="sub">Instances on this host - each one is its own process with its own console, stats and backups.</p>
+      </div>
+      <button class="addbtn" id="openWizard" title="Create instance" aria-label="Create instance">+</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Instances</div>
+      <table>
+        <thead><tr><th>Name</th><th>Minecraft</th><th>Loader</th><th>Port</th><th>Usage</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="page" id="page-users">
+    <div class="topbar">
+      <div>
+        <h1>Manage users</h1>
+        <p class="sub">Who can log in, and exactly what each account may do.</p>
+      </div>
+      <button class="addbtn" id="openUserModal" title="Add user" aria-label="Add user">+</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Username</th><th>Access</th><th></th></tr></thead>
+        <tbody id="userRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="page" id="page-settings">
+    <div class="topbar">
+      <div>
+        <h1>Settings</h1>
+        <p class="sub">Panel-wide behavior.</p>
+      </div>
+    </div>
+    <div class="card">
+      <label class="toggle-row">
+        <span class="toggle"><input type="checkbox" id="set-updStopped" /><span class="toggle-track"></span><span class="toggle-thumb"></span></span>
+        <span>Require all servers to be stopped before updating</span>
+      </label>
+      <label class="toggle-row" style="margin-top:14px">
+        <span class="toggle"><input type="checkbox" id="set-trustProxy" /><span class="toggle-track"></span><span class="toggle-thumb"></span></span>
+        <span>This panel runs behind an HTTPS reverse proxy</span>
+      </label>
+      <p class="hint">Turn this on only when a proxy such as Caddy or nginx in front of the panel sets X-Forwarded-For and X-Forwarded-Proto. It enables Secure cookies and correct client IPs for login protection.</p>
+      <p class="hint" id="set-status"></p>
+    </div>
+  </section>
+
+  <section class="page" id="page-update">
+    <div class="topbar">
+      <div>
+        <h1>Update</h1>
+        <p class="sub">What's currently installed on this host, and what's newest on GitHub.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="kv-row"><div class="kv-key">Installed version</div><div class="kv-val" id="upd-current">-</div></div>
+      <div class="kv-row"><div class="kv-key">Latest release</div><div class="kv-val" id="upd-latest">-</div></div>
+      <div class="kv-row"><div class="kv-key">Released</div><div class="kv-val" id="upd-date">-</div></div>
+      <div class="kv-row"><div class="kv-key">Status</div><div class="kv-val" id="upd-status">-</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Updating</div>
+      <p class="hint" style="margin-top:0">Updating stops running servers briefly, installs the newest release, and starts the ones that were running again.</p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="upd-now" style="display:none">Update now</button>
+        <button class="btn" id="upd-check">Check for updates</button>
+        <a class="btn" id="upd-release-link" href="#">View release on GitHub</a>
+      </div>
+      <p class="hint" id="upd-progress"></p>
+      <p class="hint" id="upd-warn" style="color:var(--red)"></p>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<div class="modal-back" id="userBack">
+  <div class="modal wide">
+    <div class="modal-title" id="userModalTitle">Add user</div>
+    <div class="field-row" id="userNameRow">
+      <div class="field"><label for="um-username">Username</label><input id="um-username" autocomplete="off"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="um-password">Password</label><input id="um-password" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="um-password2">Repeat password</label><input id="um-password2" type="password" autocomplete="new-password"></div>
+    </div>
+    <div class="field">
+      <label for="um-preset">Preset</label>
+      <select id="um-preset">
+        <option value="administrator">Administrator</option>
+        <option value="manager">Manager</option>
+        <option value="operator">Operator</option>
+        <option value="viewer">Viewer</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+    <div class="perm-title">Panel</div>
+    <div class="perm-grid" id="um-panel"></div>
+    <div class="perm-title">Default access to every instance</div>
+    <div class="perm-grid" id="um-global"></div>
+    <div class="perm-title">Per-instance overrides</div>
+    <table>
+      <thead><tr><th>Instance</th><th>Access</th></tr></thead>
+      <tbody id="um-instances"></tbody>
+    </table>
+    <p class="hint" id="um-status" style="color:var(--red)"></p>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn" id="um-cancel">Cancel</button>
+      <button class="btn primary" id="um-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle"></div>
+    <p class="modal-msg" id="modalMsg"></p>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<div class="wizard-back" id="wizardBack">
+  <div class="wizard">
+    <div class="steps"><span id="stepDot1"></span><span id="stepDot2"></span><span id="stepDot3"></span></div>
+
+    <div id="step1">
+      <h2>Create instance</h2>
+      <p class="step-hint">Name it and pick what it runs.</p>
+      <div class="field"><label for="w-name">Instance name</label><input id="w-name" placeholder="survival-2"></div>
+      <div class="field-row">
+        <div class="field"><label for="w-loader">Loader</label>
+          <select id="w-loader">
+            <option value="vanilla" selected>Vanilla</option>
+            <option value="paper">Paper</option>
+            <option value="purpur">Purpur</option>
+            <option value="fabric">Fabric</option>
+            <option value="forge">Forge</option>
+            <option value="neoforge">NeoForge</option>
+          </select>
+        </div>
+        <div class="field"><label for="w-mc">Minecraft version</label><select id="w-mc"><option value="">Loading...</option></select></div>
+      </div>
+      <div class="field" id="w-loaderVersionField"><label for="w-loaderVersion">Loader version</label><select id="w-loaderVersion" disabled><option value="">Pick a Minecraft version first</option></select></div>
+      <p class="hint" id="w1-error" style="color:var(--red);display:none"></p>
+      <div class="wizard-actions"><button class="btn" id="w-cancel1">Cancel</button><button class="btn primary" id="w-next1">Next</button></div>
+    </div>
+
+    <div id="step2" style="display:none">
+      <h2>Resources</h2>
+      <p class="step-hint">How much of this machine the instance may use.</p>
+      <div class="field-row">
+        <div class="field"><label for="w-port">Server port</label><input id="w-port" type="number" value="25565"><div class="hint" id="w-portHint" style="margin-top:4px"></div></div>
+        <div class="field"><label for="w-ram">Memory (MB)</label><input id="w-ram" type="number" value="4096" step="512" min="1024" max="32768"></div>
+      </div>
+      <p class="hint" style="margin-top:-6px">Handed to the JVM as -Xmx. Leave headroom for the OS and other instances on this host.</p>
+      <label class="toggle-row" style="margin-top:10px"><span class="toggle"><input type="checkbox" id="w-autostart" /><span class="toggle-track"></span><span class="toggle-thumb"></span></span><span>Start automatically when meowmarism starts</span></label>
+      <p class="hint" id="w2-error" style="color:var(--red);display:none"></p>
+      <div class="wizard-actions"><button class="btn" id="w-back2">Back</button><button class="btn primary" id="w-next2">Next</button></div>
+    </div>
+
+    <div id="step3" style="display:none">
+      <h2>Backups</h2>
+      <p class="step-hint">Automatic world backups for this instance.</p>
+      <div class="field-row">
+        <div class="field"><label for="w-backupInterval">Every (hours)</label><input id="w-backupInterval" type="number" value="6" min="1" max="168"></div>
+        <div class="field"><label for="w-maxBackups">Keep at most</label><input id="w-maxBackups" type="number" value="10" min="1" max="100"></div>
+      </div>
+      <div class="wizard-actions"><button class="btn" id="w-back3">Back</button><button class="btn primary" id="w-create">Create instance</button></div>
+      <p class="hint" id="createStatus"></p>
+    </div>
+
+    <div id="step4" style="display:none">
+      <h2 id="creatingTitle">Creating instance&hellip;</h2>
+      <p class="step-hint" id="creatingHint">Downloading and installing the server software - this can take a few minutes.</p>
+      <div class="progress-track"><div class="progress-fill" id="creatingBar" style="width:5%"></div></div>
+      <div class="console" id="creatingConsole"></div>
+      <div class="wizard-actions">
+        <span></span>
+        <a class="btn primary" id="creatingOpen" style="display:none">Open instance</a>
+        <button class="btn" id="creatingClose" style="display:none">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// --- shared modal, replaces every alert()/confirm() in this page ---
+function showModal(title, message, buttons) {
+  return new Promise((resolve) => {
+    $('modalTitle').textContent = title;
+    $('modalMsg').textContent = message;
+    const actions = $('modalActions');
+    actions.innerHTML = '';
+    const close = (value) => { $('modalBack').classList.remove('open'); resolve(value); };
+    buttons.forEach((b) => {
+      const btn = document.createElement('button');
+      btn.className = `btn${b.primary ? ' primary' : ''}`;
+      btn.textContent = b.label;
+      btn.addEventListener('click', () => close(b.value));
+      actions.appendChild(btn);
+    });
+    $('modalBack').classList.add('open');
+  });
+}
+function modalAlert(title, message) {
+  return showModal(title, message, [{ label: 'OK', value: true, primary: true }]);
+}
+function modalConfirm(title, message, confirmLabel = 'Confirm') {
+  return showModal(title, message, [
+    { label: 'Cancel', value: false },
+    { label: confirmLabel, value: true, primary: true },
+  ]);
+}
+
+(function () {
+  const h = location.hostname;
+  const local = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|\[?::1\]?$|\[?f[cd])/i.test(h) || h.endsWith('.local') || h.endsWith('.lan') || !h.includes('.');
+  if (location.protocol === 'http:' && !local) document.getElementById('httpWarn').style.display = 'block';
+})();
+
+// --- sidebar nav ---
+const PAGE_PATHS = { server: '/server', users: '/users', settings: '/settings', update: '/update' };
+function showPage(page, { push = true } = {}) {
+  if (!PAGE_PATHS[page] || ((page === 'users' || page === 'settings') && !currentPanel.users)) page = 'server';
+  document.querySelectorAll('.side-item[data-page]').forEach((b) => b.classList.toggle('active', b.dataset.page === page));
+  document.querySelectorAll('.page').forEach((p) => p.classList.toggle('active', p.id === `page-${page}`));
+  if (push && location.pathname !== PAGE_PATHS[page]) history.pushState({}, '', PAGE_PATHS[page]);
+  if (page === 'users') loadUsers();
+  if (page === 'settings') loadSettingsPage();
+  if (page === 'update') loadUpdatePage();
+}
+document.querySelectorAll('.side-item[data-page]').forEach((btn) => {
+  btn.addEventListener('click', () => showPage(btn.dataset.page));
+});
+window.addEventListener('popstate', () => showPage(pageFromPath(), { push: false }));
+function pageFromPath() {
+  return Object.keys(PAGE_PATHS).find((k) => PAGE_PATHS[k] === location.pathname.replace(/\/+$/, '')) || 'server';
+}
+
+async function visitExternal(url, what) {
+  const go = await modalConfirm('Leave this panel?', `Do you want to visit ${what}? This opens in a new tab.`, 'Visit');
+  if (go) window.open(url, '_blank', 'noopener');
+}
+$('navGh').addEventListener('click', () => visitExternal('https://github.com/hexedmaya/meowmarism', 'our GitHub'));
+
+let latestVersionInfo = null;
+function refreshUpdateIndicator() {
+  const show = !!(latestVersionInfo && latestVersionInfo.updateAvailable && currentPanel.update);
+  $('updateDot').style.display = show ? '' : 'none';
+  $('updatePill').style.display = show ? '' : 'none';
+}
+async function loadVersion(refresh) {
+  try {
+    latestVersionInfo = await (await fetch(refresh ? '/api/version?refresh=1' : '/api/version')).json();
+    refreshUpdateIndicator();
+    if (latestVersionInfo.version) $('sideVersion').textContent = `v${latestVersionInfo.version} · `;
+  } catch (_) {}
+}
+$('sideLicenseLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  visitExternal('https://github.com/hexedmaya/meowmarism/blob/master/LICENSE', 'the license on GitHub');
+});
+async function loadSettingsPage() {
+  const r = await fetch('/api/settings');
+  if (!r.ok) return;
+  const cfg = await r.json();
+  $('set-updStopped').checked = cfg.updateRequiresStopped;
+  $('set-trustProxy').checked = !!cfg.trustProxy;
+}
+$('set-updStopped').addEventListener('change', async (e) => {
+  const r = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updateRequiresStopped: e.target.checked }) });
+  $('set-status').textContent = r.ok ? 'Saved.' : 'Could not save.';
+});
+$('set-trustProxy').addEventListener('change', async (e) => {
+  const r = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trustProxy: e.target.checked }) });
+  $('set-status').textContent = r.ok ? 'Saved.' : 'Could not save.';
+});
+$('upd-check').addEventListener('click', async () => {
+  $('upd-check').disabled = true;
+  await loadVersion(true);
+  await loadUpdatePage();
+  $('upd-check').disabled = false;
+});
+setInterval(loadVersion, 5 * 60 * 1000);
+async function loadUpdatePage() {
+  const v = await (await fetch('/api/version')).json();
+  latestVersionInfo = v;
+  $('upd-current').textContent = v.version ? `v${v.version}` : 'unknown';
+  $('upd-latest').textContent = v.latestVersion ? `v${v.latestVersion}` : 'unknown';
+  $('upd-date').textContent = v.publishedAt ? new Date(v.publishedAt).toLocaleDateString() : '-';
+  $('upd-status').innerHTML = v.checkError && !v.latestVersion ? '<span class="badge">' + window.t('could not check GitHub') + '</span>' : v.updateAvailable
+    ? '<span class="badge new">update available</span>'
+    : '<span class="badge ok">up to date</span>';
+  $('upd-release-link').onclick = (e) => { e.preventDefault(); visitExternal(v.releaseUrl, 'the release notes on GitHub'); };
+  $('upd-now').style.display = v.updateAvailable && currentPanel.update ? '' : 'none';
+  const blocked = v.updateRequiresStopped && v.running && v.running.length;
+  $('upd-now').disabled = !!blocked;
+  try {
+    const st = await (await fetch('/api/update-status')).json();
+    const lr = st.lastResult;
+    $('upd-warn').textContent = lr && lr.rolledBack ? window.t(`The last update to v${(lr.to || '').replace(/^v/, '')} failed (${lr.reason}) and was rolled back to v${lr.from}.`) : '';
+  } catch (_) {}
+  $('upd-progress').textContent = blocked ? `Stop all servers before updating (running: ${v.running.join(', ')}).` : '';
+}
+let currentRole = null;
+$('upd-now').addEventListener('click', async () => {
+  const ok = await modalConfirm('Update now?', 'Running servers are stopped briefly, the new release is installed, and the servers that were running start again on their own. The panel is unreachable for a few seconds.', 'Update');
+  if (!ok) return;
+  $('upd-now').disabled = true;
+  $('upd-progress').textContent = 'Downloading and installing...';
+  const r = await fetch('/api/update', { method: 'POST' });
+  if (!r.ok) { $('upd-progress').textContent = (await r.json().catch(() => ({}))).error || 'Could not start the update.'; $('upd-now').disabled = false; return; }
+  const before = latestVersionInfo?.version;
+  const started = Date.now();
+  const poll = setInterval(async () => {
+    try {
+      const vr = await fetch('/api/version');
+      if (vr.status === 401) { clearInterval(poll); location.reload(); return; }
+      const v = await vr.json();
+      if (v.version && v.version !== before) { clearInterval(poll); location.reload(); return; }
+      const st = await (await fetch('/api/update-status')).json();
+      if (st.error) { clearInterval(poll); $('upd-progress').textContent = `Update failed: ${st.error}`; $('upd-now').disabled = false; }
+      else if (st.step) $('upd-progress').textContent = `${window.t(st.step)}...`;
+    } catch (_) { $('upd-progress').textContent = 'Restarting...'; }
+    if (Date.now() - started > 5 * 60 * 1000) { clearInterval(poll); $('upd-progress').textContent = 'This is taking too long. Reload the page or check the host.'; $('upd-now').disabled = false; }
+  }, 2000);
+});
+
+function healthDot(i) {
+  if (i.health === 'error') return 'err';
+  if (i.health === 'running') return 'on';
+  if (i.health === 'panel-off' || i.health === 'stopped') return 'off';
+  return 'mid'; // starting/unknown
+}
+function healthLabel(i) {
+  if (i.health === 'error') return 'error';
+  if (i.health === 'running') return 'running';
+  if (i.health === 'panel-off') return 'panel not started';
+  if (i.health === 'starting') return 'starting';
+  return i.health || 'stopped';
+}
+
+async function loadInstances() {
+  const r = await fetch('/api/instances');
+  const data = await r.json();
+  $('openWizard').style.display = data.canCreate ? '' : 'none';
+  $('rows').innerHTML = data.instances.map((i) => {
+    const canOpen = i.health !== 'panel-off';
+    const openLink = canOpen ? `<a class="btn" href="/instance/${encodeURIComponent(i.name)}/">Open</a>` : '';
+    const status = `<div class="statusline"><span class="dot ${healthDot(i)}"></span>${esc(healthLabel(i))} ${openLink}</div>`
+      + (i.health === 'error' && i.crash?.reason ? `<div class="err-msg">${esc(i.crash.reason)}</div>` : '');
+    const canManage = i.caps.includes('power');
+    const canRemove = i.caps.includes('remove');
+    let actions = '';
+    if (canManage) {
+      actions = i.running
+        ? `<button class="btn danger" data-act="stop" data-id="${esc(i.name)}">Stop</button> <button class="btn" data-act="restart" data-id="${esc(i.name)}">Restart</button>`
+        : `<button class="btn primary" data-act="start" data-id="${esc(i.name)}">Start</button>`;
+    }
+    if (canRemove && !i.running) actions += ` <button class="btn danger" data-act="remove" data-id="${esc(i.name)}">Remove</button>`;
+    const usage = i.running && (i.cpuPercent != null || i.rssMB != null)
+      ? `<span class="usage">${i.cpuPercent != null ? `<b>${i.cpuPercent.toFixed(0)}%</b> cpu` : ''}${i.cpuPercent != null && i.rssMB != null ? ' · ' : ''}${i.rssMB != null ? `<b>${(i.rssMB / 1024).toFixed(1)}G</b> ram` : ''}</span>`
+      : '<span class="usage">-</span>';
+    return `<tr>
+      <td><span data-no-i18n>${esc(i.name)}</span><div class="hint">${status}</div></td>
+      <td>${esc(i.mcVersion || '-')}</td>
+      <td>${esc(i.loader || 'neoforge')} ${esc(i.loaderVersion || '')}</td>
+      <td>${i.port || '-'}</td>
+      <td>${usage}</td>
+      <td style="text-align:right;white-space:nowrap">${actions}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="hint">No instances yet - create one with the + button above.</td></tr>';
+}
+
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const { act, id } = btn.dataset;
+  if (act === 'remove') {
+    const ok = await modalConfirm('Remove this instance?', 'It disappears from this list, but files on disk are kept.', 'Remove');
+    if (!ok) return;
+  }
+  if (act === 'stop' || act === 'restart') {
+    const stopping = act === 'stop';
+    const ok = await modalConfirm(stopping ? 'Stop this server?' : 'Restart this server?', 'Players will be disconnected' + (stopping ? ' and the world is saved.' : ' while it restarts.'), stopping ? 'Stop' : 'Restart');
+    if (!ok) return;
+  }
+  btn.disabled = true;
+  try {
+    if (act === 'remove') await fetch(`/api/instances/${id}`, { method: 'DELETE' });
+    else await fetch(`/api/instances/${id}/${act}`, { method: 'POST' });
+  } finally {
+    setTimeout(loadInstances, act === 'remove' ? 0 : 800);
+  }
+});
+
+async function loadMcVersions(loader) {
+  const sel = $('w-mc');
+  sel.innerHTML = '<option value="">Loading...</option>';
+  const r = await fetch(`/api/loader-versions?loader=${encodeURIComponent(loader)}`);
+  const data = await r.json();
+  sel.innerHTML = data.mcVersions.map((v) => `<option value="${v}">${v}</option>`).join('');
+  if (data.mcVersions.length) loadLoaderVersions(loader, data.mcVersions[0]);
+}
+async function loadLoaderVersions(loader, mc) {
+  const sel = $('w-loaderVersion');
+  const noLoaderVersion = ['vanilla', 'paper', 'purpur'].includes(loader);
+  $('w-loaderVersionField').style.display = noLoaderVersion ? 'none' : '';
+  if (noLoaderVersion) { sel.disabled = true; sel.innerHTML = '<option value="">(not needed)</option>'; return; }
+  sel.disabled = true; sel.innerHTML = '<option value="">Loading...</option>';
+  const r = await fetch(`/api/loader-versions?loader=${encodeURIComponent(loader)}&mc=${encodeURIComponent(mc)}`);
+  const data = await r.json();
+  const versions = Array.isArray(data) ? data : data.versions;
+  sel.innerHTML = (versions || []).map((v) => `<option value="${v}">${v}</option>`).join('') || '<option value="">none found</option>';
+  sel.disabled = false;
+}
+async function suggestPort(start) {
+  try {
+    const d = await (await fetch(`/api/free-port?start=${encodeURIComponent(start)}`)).json();
+    $('w-port').value = d.port;
+    $('w-portHint').textContent = d.taken ? window.t(`Port ${start} is in use, ${d.port} is free.`) : '';
+  } catch (_) {}
+}
+$('w-port').addEventListener('change', (e) => suggestPort(Number(e.target.value) || 25565));
+$('w-loader').addEventListener('change', (e) => loadMcVersions(e.target.value));
+$('w-mc').addEventListener('change', (e) => { if (e.target.value) loadLoaderVersions($('w-loader').value, e.target.value); });
+
+// --- wizard flow ---
+let creating = false;
+function showStep(n) {
+  $('step1').style.display = n === 1 ? '' : 'none';
+  $('step2').style.display = n === 2 ? '' : 'none';
+  $('step3').style.display = n === 3 ? '' : 'none';
+  $('step4').style.display = n === 4 ? '' : 'none';
+  $('stepDot1').classList.toggle('done', n >= 1);
+  $('stepDot2').classList.toggle('done', n >= 2);
+  $('stepDot3').classList.toggle('done', n >= 3);
+}
+function openWizard() {
+  $('wizardBack').classList.add('open');
+  suggestPort(25565);
+  showStep(1);
+  $('createStatus').textContent = '';
+  fieldError('w1-error', null);
+  fieldError('w2-error', null);
+  if ($('w-mc').options.length <= 1) loadMcVersions($('w-loader').value);
+}
+function closeWizard() { if (creating) return; $('wizardBack').classList.remove('open'); }
+$('openWizard').addEventListener('click', openWizard);
+$('w-cancel1').addEventListener('click', closeWizard);
+
+function fieldError(id, msg) {
+  const el = $(id);
+  if (!msg) { el.style.display = 'none'; el.textContent = ''; return false; }
+  el.textContent = msg; el.style.display = ''; return true;
+}
+$('w-next1').addEventListener('click', () => {
+  const name = $('w-name').value.trim();
+  const mcVersion = $('w-mc').value;
+  const loaderVersion = $('w-loaderVersion').value;
+  const loader = $('w-loader').value;
+  if (!name) { fieldError('w1-error', 'Pick an instance name'); return; }
+  if (!mcVersion) { fieldError('w1-error', 'Pick a Minecraft version'); return; }
+  if (loader !== 'vanilla' && !loaderVersion) { fieldError('w1-error', 'Pick a loader version'); return; }
+  fieldError('w1-error', null);
+  showStep(2);
+});
+$('w-back2').addEventListener('click', () => showStep(1));
+$('w-next2').addEventListener('click', () => {
+  const port = Number($('w-port').value);
+  const ram = Number($('w-ram').value);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) { fieldError('w2-error', 'Enter a valid port (1-65535)'); return; }
+  if (!ram || ram < 1024) { fieldError('w2-error', 'Give it at least 1024 MB'); return; }
+  fieldError('w2-error', null);
+  showStep(3);
+});
+$('w-back3').addEventListener('click', () => showStep(2));
+
+$('w-create').addEventListener('click', async () => {
+  const body = {
+    name: $('w-name').value.trim(),
+    loader: $('w-loader').value,
+    mcVersion: $('w-mc').value,
+    loaderVersion: $('w-loaderVersion').value,
+    port: Number($('w-port').value),
+    ramMB: Number($('w-ram').value),
+    backupIntervalHours: Number($('w-backupInterval').value),
+    maxBackups: Number($('w-maxBackups').value),
+    autoStart: $('w-autostart').checked,
+  };
+  $('w-create').disabled = true;
+  const r = await fetch('/api/instances', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json();
+  $('w-create').disabled = false;
+  if (!d.ok) { $('createStatus').textContent = d.error || 'Failed to create'; return; }
+  startCreationView(body.name);
+});
+
+function startCreationView(name) {
+  creating = true;
+  showStep(4);
+  $('creatingTitle').textContent = `Creating "${name}"…`;
+  $('creatingHint').textContent = 'Downloading and installing the server software - this can take a few minutes.';
+  $('creatingBar').style.width = '5%';
+  $('creatingBar').className = 'progress-fill';
+  $('creatingConsole').innerHTML = '';
+  $('creatingOpen').style.display = 'none';
+  $('creatingClose').style.display = 'none';
+  let shownLines = 0;
+  const box = $('creatingConsole');
+  const poll = setInterval(async () => {
+    const s = await (await fetch('/api/create-log')).json();
+    const lines = s.lines || [];
+    if (lines.length > shownLines) {
+      for (let i = shownLines; i < lines.length; i++) {
+        const div = document.createElement('div');
+        div.textContent = lines[i];
+        box.appendChild(div);
+      }
+      shownLines = lines.length;
+      box.scrollTop = box.scrollHeight;
+    }
+    $('creatingBar').style.width = `${s.progress || 0}%`;
+    if (s.done) {
+      clearInterval(poll);
+      creating = false;
+      if (s.error) {
+        $('creatingTitle').textContent = `Failed to create "${name}"`;
+        $('creatingHint').textContent = s.error;
+        $('creatingBar').className = 'progress-fill err';
+      } else {
+        $('creatingTitle').textContent = `"${s.name || name}" is ready`;
+        $('creatingHint').textContent = 'Installed and registered - start it whenever you want.';
+        $('creatingBar').style.width = '100%';
+        $('creatingBar').className = 'progress-fill done';
+        if (s.name) {
+          $('creatingOpen').href = `/instance/${encodeURIComponent(s.name)}/`;
+          $('creatingOpen').style.display = '';
+        }
+      }
+      $('creatingClose').style.display = '';
+      $('w-name').value = '';
+      loadInstances();
+    }
+  }, 1000);
+}
+$('creatingClose').addEventListener('click', closeWizard);
+
+// --- account / users ---
+async function loadAccount() {
+  const s = await (await fetch('/auth/status')).json();
+  $('navLogout').style.display = s.loggedIn ? '' : 'none';
+  $('sideAccountName').textContent = s.username || 'not logged in';
+  $('sideAccountRole').textContent = s.role || '';
+  $('sideAvatar').textContent = s.username ? s.username.slice(0, 1) : '?';
+  $('navUsers').style.display = s.panel && s.panel.users ? '' : 'none';
+  $('navSettings').style.display = s.panel && s.panel.users ? '' : 'none';
+  currentRole = s.role;
+  currentPanel = s.panel || {};
+  refreshUpdateIndicator();
+}
+let currentPanel = {};
+let knownUsers = [];
+let instanceCapList = [];
+const CAP_LABELS = { view: 'View', console: 'Console & players', power: 'Start / stop', files: 'Files', mods: 'Mods', backups: 'Backups', settings: 'Settings', remove: 'Remove instance' };
+const PANEL_LABELS = { users: 'Manage users', create: 'Create instances', update: 'Update the panel' };
+const PRESET_CAPS = {
+  viewer: ['view'],
+  operator: ['view', 'console', 'power'],
+  manager: ['view', 'console', 'power', 'files', 'mods', 'backups', 'settings'],
+  administrator: ['view', 'console', 'power', 'files', 'mods', 'backups', 'settings', 'remove'],
+};
+const PRESET_PANEL = {
+  administrator: { users: true, create: true, update: true },
+  manager: { users: false, create: true, update: false },
+  operator: { users: false, create: false, update: false },
+  viewer: { users: false, create: false, update: false },
+};
+const sameCaps = (a, b) => a.length === b.length && a.every((c) => b.includes(c));
+function presetOfCaps(caps) {
+  if (!caps.length) return 'none';
+  for (const [name, list] of Object.entries(PRESET_CAPS)) if (sameCaps(caps, list)) return name;
+  return 'custom';
+}
+function describeUser(u) {
+  if (u.role === 'owner') return 'Owner';
+  const p = presetOfCaps(u.access.global);
+  const isAdmin = u.panel.users && u.panel.create && u.panel.update && p === 'administrator';
+  const base = isAdmin ? 'Administrator' : p === 'none' ? 'No default access' : p === 'custom' ? 'Custom access' : p[0].toUpperCase() + p.slice(1);
+  const extra = Object.keys(u.access.instances).length;
+  return extra ? base + ' + ' + extra + ' override' + (extra > 1 ? 's' : '') : base;
+}
+
+async function loadUsers() {
+  const r = await fetch('/api/users');
+  if (!r.ok) { $('userRows').innerHTML = '<tr><td colspan="3" class="hint">Not allowed.</td></tr>'; return; }
+  const d = await r.json();
+  knownUsers = d.users;
+  instanceCapList = d.instanceCaps;
+  $('userRows').innerHTML = d.users.map((u) => `<tr>
+      <td>${esc(u.username)}</td>
+      <td>${esc(describeUser(u))}</td>
+      <td style="text-align:right;white-space:nowrap">${u.role === 'owner' ? '' : `<button class="btn" data-user-edit="${esc(u.username)}">Edit</button> <button class="btn danger" data-user-remove="${esc(u.username)}">Remove</button>`}</td>
+    </tr>`).join('') || '<tr><td colspan="3" class="hint">No accounts yet.</td></tr>';
+}
+document.addEventListener('click', async (e) => {
+  const removeBtn = e.target.closest('[data-user-remove]');
+  if (removeBtn) {
+    const username = removeBtn.dataset.userRemove;
+    const ok = await modalConfirm('Remove this user?', '"' + username + '" will not be able to log in anymore.', 'Remove');
+    if (!ok) return;
+    const r = await fetch('/api/users/' + encodeURIComponent(username), { method: 'DELETE' });
+    if (!r.ok) await modalAlert('Not removed', (await r.json()).error || 'Failed');
+    loadUsers();
+    return;
+  }
+  const editBtn = e.target.closest('[data-user-edit]');
+  if (editBtn) openUserModal(editBtn.dataset.userEdit);
+});
+
+// --- add / edit user modal ---
+let editingUser = null;
+const capBox = (group, cap, label, checked, disabled) => '<label class="perm-item"><input type="checkbox" data-' + group + '="' + cap + '" ' + (checked ? 'checked' : '') + ' ' + (disabled ? 'disabled' : '') + '>' + esc(label) + '</label>';
+function renderCaps(access, panel) {
+  $('um-panel').innerHTML = Object.keys(PANEL_LABELS).map((c) => capBox('panelcap', c, PANEL_LABELS[c], panel[c], c === 'users' && currentRole !== 'owner')).join('');
+  $('um-global').innerHTML = instanceCapList.map((c) => capBox('gcap', c, CAP_LABELS[c], access.global.includes(c))).join('');
+}
+function readCaps() {
+  const panel = {};
+  document.querySelectorAll('[data-panelcap]').forEach((b) => { panel[b.dataset.panelcap] = b.checked; });
+  const global = [...document.querySelectorAll('[data-gcap]')].filter((b) => b.checked).map((b) => b.dataset.gcap);
+  const instances = {};
+  document.querySelectorAll('[data-inst-preset]').forEach((sel) => {
+    if (sel.value === 'default' || sel.value === 'custom') return;
+    instances[sel.dataset.instPreset] = sel.value === 'none' ? [] : PRESET_CAPS[sel.value] || [];
+  });
+  return { panel, access: { global, instances } };
+}
+async function openUserModal(username) {
+  editingUser = username || null;
+  const user = username ? knownUsers.find((u) => u.username === username) : null;
+  $('userModalTitle').textContent = user ? 'Edit ' + user.username : 'Add user';
+  $('userNameRow').style.display = user ? 'none' : '';
+  $('um-username').value = '';
+  $('um-password').value = ''; $('um-password2').value = '';
+  $('um-password').placeholder = user ? 'Leave blank to keep the current one' : '';
+  $('um-status').textContent = '';
+  const access = user ? user.access : { global: PRESET_CAPS.viewer, instances: {} };
+  const panel = user ? user.panel : PRESET_PANEL.viewer;
+  const gp = presetOfCaps(access.global);
+  $('um-preset').value = !user ? 'viewer' : gp === 'administrator' && panel.users ? 'administrator' : gp === 'none' ? 'custom' : gp;
+  renderCaps(access, panel);
+  const inst = await fetch('/api/instances');
+  const list = inst.ok ? (await inst.json()).instances : [];
+  $('um-instances').innerHTML = list.map((i) => {
+    const cur = access.instances[i.name];
+    const custom = cur !== undefined && presetOfCaps(cur) === 'custom';
+    return '<tr><td>' + esc(i.name) + '</td><td><select data-inst-preset="' + esc(i.name) + '">'
+      + '<option value="default">Use default</option><option value="none">No access</option>'
+      + '<option value="viewer">Viewer</option><option value="operator">Operator</option>'
+      + '<option value="manager">Manager</option><option value="administrator">Full</option>'
+      + (custom ? '<option value="custom" selected disabled>Custom</option>' : '')
+      + '</select></td></tr>';
+  }).join('') || '<tr><td colspan="2" class="hint">No instances yet.</td></tr>';
+  list.forEach((i) => {
+    const cur = access.instances[i.name];
+    if (cur === undefined) return;
+    const p = presetOfCaps(cur);
+    const sel = document.querySelector('[data-inst-preset="' + CSS.escape(i.name) + '"]');
+    if (sel && p !== 'custom') sel.value = p;
+  });
+  $('userBack').classList.add('open');
+}
+$('openUserModal').addEventListener('click', () => openUserModal(null));
+$('um-cancel').addEventListener('click', () => $('userBack').classList.remove('open'));
+$('um-preset').addEventListener('change', (e) => {
+  const v = e.target.value;
+  if (v === 'custom') return;
+  const p = PRESET_PANEL[v];
+  renderCaps({ global: PRESET_CAPS[v], instances: {} }, currentRole === 'owner' ? p : { ...p, users: false });
+});
+$('um-save').addEventListener('click', async () => {
+  const say = (m) => { $('um-status').textContent = m; };
+  const password = $('um-password').value;
+  if (password && password.length < 8) { say('Password must be at least 8 characters'); return; }
+  if (password !== $('um-password2').value) { say("Passwords don't match"); return; }
+  const settings = readCaps();
+  const post = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!editingUser) {
+    const username = $('um-username').value.trim();
+    if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username)) { say('Username: 3-32 letters, digits, . _ -'); return; }
+    if (!password) { say('Enter a password'); return; }
+    const r = await post('/api/users', { username, password, panel: settings.panel, access: settings.access });
+    if (!r.ok) { say((await r.json()).error || 'Failed to add user'); return; }
+  } else {
+    if (password) {
+      const rp = await post('/api/users/' + encodeURIComponent(editingUser) + '/password', { password });
+      if (!rp.ok) { say((await rp.json()).error || 'Failed to change the password'); return; }
+    }
+    const ra = await post('/api/users/' + encodeURIComponent(editingUser) + '/access', settings);
+    if (!ra.ok) { say((await ra.json()).error || 'Failed to save'); return; }
+  }
+  $('userBack').classList.remove('open');
+  loadUsers();
+});
+
+loadInstances();
+loadAccount().then(() => showPage(pageFromPath(), { push: false }));
+loadVersion();
+setInterval(loadInstances, 5000);
+</script>
+</body>
+</html>
