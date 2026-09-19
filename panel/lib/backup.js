@@ -12,7 +12,7 @@ let ZSTD_AVAILABLE = false;
 try { execFileSync('zstd', ['--version'], { stdio: 'ignore' }); ZSTD_AVAILABLE = true; } catch (_) {}
 const BACKUP_EXT = ZSTD_AVAILABLE ? '.tar.zst' : '.tar.gz';
 const BACKUP_NAME_RE = /^[a-zA-Z0-9._-]+\.tar\.(gz|zst)$/;
-const MIN_FREE_DISK_GB_FOR_BACKUP = 2;
+const MIN_FREE_DISK_GB_FOR_BACKUP = 5;
 
 // Age-tiered retention: keep every backup for the first few hours (fine
 // rollback granularity for "oops" moments), then thin older ones down to
@@ -96,6 +96,22 @@ function pruneBackups() {
   }
 }
 
+function dirSizeBytes(dir) {
+  let total = 0;
+  const stack = [dir];
+  while (stack.length) {
+    const cur = stack.pop();
+    let entries;
+    try { entries = fs.readdirSync(cur, { withFileTypes: true }); } catch (_) { continue; }
+    for (const e of entries) {
+      const p = path.join(cur, e.name);
+      if (e.isDirectory()) stack.push(p);
+      else if (e.isFile()) { try { total += fs.statSync(p).size; } catch (_) {} }
+    }
+  }
+  return total;
+}
+
 function diskFreeGB() {
   try {
     if (typeof fs.statfsSync !== 'function') return null;
@@ -127,8 +143,10 @@ function runBackup(reason, deps) {
       return false;
     }
     const freeGB = diskFreeGB();
-    if (freeGB != null && freeGB < MIN_FREE_DISK_GB_FOR_BACKUP) {
-      const msg = `low disk space (${freeGB.toFixed(1)} GB free, need at least ${MIN_FREE_DISK_GB_FOR_BACKUP} GB)`;
+    const reserveGB = Number.isFinite(panelConfig.backupMinFreeGB) ? panelConfig.backupMinFreeGB : MIN_FREE_DISK_GB_FOR_BACKUP;
+    const worldGB = dirSizeBytes(WORLD_DIR) / 1024 ** 3;
+    if (freeGB != null && freeGB - worldGB < reserveGB) {
+      const msg = `not enough disk space (${freeGB.toFixed(1)} GB free, world ~${worldGB.toFixed(1)} GB, ${reserveGB} GB must stay free)`;
       deps.broadcast(`--- backup skipped: ${msg} ---`);
       state.lastBackupError = msg;
       deps.pushTimeline('backup', 'World backup skipped', msg, 'error', { reason });

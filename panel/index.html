@@ -362,10 +362,11 @@
             <div class="settings-actions" style="margin-top:8px"><button class="btn primary" id="btnSaveAutoRestart">Save</button></div>
           </div></article>
           <article class="card span-6"><div class="card-head"><div class="card-title">Backup settings</div></div><div class="card-body">
-            <div class="hint" style="margin-bottom:8px">How often backups run automatically and how many are kept.</div>
+            <div class="hint" style="margin-bottom:8px">How often backups run automatically, how many are kept, and how much disk space must stay free after a backup.</div>
             <div class="cmd-row">
               <label class="hint">Every<input class="compact-input" type="number" min="0.25" max="168" step="0.25" id="backupIntervalHours" style="width:70px;margin:0 6px">hours</label>
               <label class="hint">Max<input class="compact-input" type="number" min="1" max="100" step="1" id="maxBackups" style="width:60px;margin:0 6px">backups</label>
+              <label class="hint">Keep<input class="compact-input" type="number" min="0" max="1000" step="1" id="backupMinFreeGB" style="width:60px;margin:0 6px">GB free</label>
             </div>
             <div class="settings-actions" style="margin-top:8px"><button class="btn primary" id="btnSaveBackupCfg">Save</button></div>
           </div></article>
@@ -2068,6 +2069,7 @@ async function loadAutomation() {
     $('autoRestartWarnSec').value = String(c.autoRestartWarnSec || 300);
     $('backupIntervalHours').value = c.backupIntervalHours ?? 6;
     $('maxBackups').value = c.maxBackups ?? 10;
+    $('backupMinFreeGB').value = c.backupMinFreeGB ?? 5;
     $('consoleBufferSize').value = c.consoleBufferSize ?? 5000;
     $('sleepEnabled').checked = !!c.sleepEnabled;
     $('sleepAfterMinutes').value = c.sleepAfterMinutes ?? 20;
@@ -2081,7 +2083,7 @@ $('btnSaveAutoRestart')?.addEventListener('click', () => {
     .then(() => toast('Auto-restart settings saved'));
 });
 $('btnSaveBackupCfg')?.addEventListener('click', () => {
-  fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backupIntervalHours: Number($('backupIntervalHours').value), maxBackups: Number($('maxBackups').value) }) })
+  fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backupIntervalHours: Number($('backupIntervalHours').value), maxBackups: Number($('maxBackups').value), backupMinFreeGB: Number($('backupMinFreeGB').value) }) })
     .then(() => { toast('Backup settings saved'); loadBackups(); });
 });
 $('btnSaveConsoleCfg')?.addEventListener('click', () => {

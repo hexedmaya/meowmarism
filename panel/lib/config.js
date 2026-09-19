@@ -33,6 +33,7 @@ function defaultPanelConfig() {
     lastAutoRestartDate: null,
     maxBackups: 10,
     backupIntervalHours: 6,
+    backupMinFreeGB: 5,
     consoleBufferSize: 5000,
     sleepEnabled: false,
     sleepAfterMinutes: 20,

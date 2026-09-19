@@ -2203,6 +2203,7 @@ const server = http.createServer((req, res) => {
         if (Number.isFinite(data.autoRestartWarnSec)) panelConfig.autoRestartWarnSec = Math.max(0, Math.min(3600, Math.round(data.autoRestartWarnSec)));
         if (Number.isFinite(data.maxBackups)) panelConfig.maxBackups = Math.max(1, Math.min(100, Math.round(data.maxBackups)));
         if (Number.isFinite(data.backupIntervalHours)) { panelConfig.backupIntervalHours = Math.max(0.25, Math.min(168, Number(data.backupIntervalHours))); backupLib.rescheduleAutoBackup(backupDeps); }
+        if (Number.isFinite(data.backupMinFreeGB)) panelConfig.backupMinFreeGB = Math.max(0, Math.min(1000, Number(data.backupMinFreeGB)));
         if (Number.isFinite(data.consoleBufferSize)) panelConfig.consoleBufferSize = Math.max(100, Math.min(50000, Math.round(data.consoleBufferSize)));
         if (typeof data.sleepEnabled === 'boolean') { panelConfig.sleepEnabled = data.sleepEnabled; zeroPlayersSinceMs = Date.now(); }
         if (Number.isFinite(data.sleepAfterMinutes)) panelConfig.sleepAfterMinutes = Math.max(1, Math.min(1440, Math.round(data.sleepAfterMinutes)));
