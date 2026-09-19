@@ -121,9 +121,9 @@ The panel shows a warning when it is opened over plain HTTP on a public address.
 
 ## License and Contributions
 
-Meowmarism is source-available and non-commercial under the [Meowmarism License 1.0](LICENSE).
+Meowmarism is source-available. Commercial use is permitted subject to the [Meowmarism License 1.0](LICENSE); monetization of the software itself is restricted.
 
-If you distribute a modified version, its corresponding source must remain public under the same license. Independent versions must be clearly unofficial and follow the naming and attribution requirements in the license.
+Companies may use it internally, run and sell game servers with it, and offer hosting, support or consulting. What is not allowed is charging for the software itself, for example selling licenses or downloads of it or of a fork, or a paid service whose main product is access to Meowmarism. If you distribute a modified version, its corresponding source must remain public under the same license. Independent versions must be clearly unofficial and follow the naming and attribution requirements in the license.
 
 Contributions to the official project are governed by the [Meowmarism Contributor & Governance Agreement](CONTRIBUTOR-AGREEMENT.md). Project-level contributor attribution and governance status are recorded in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
