@@ -384,7 +384,7 @@ function loadSettings() {
   if (!settingsCache) {
     let saved = {};
     try { saved = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')); } catch (_) {}
-    settingsCache = { updateRequiresStopped: saved.updateRequiresStopped !== false, trustProxy: saved.trustProxy === true };
+    settingsCache = { trustProxy: saved.trustProxy === true };
   }
   return { ...settingsCache };
 }
@@ -492,6 +492,9 @@ async function selfUpdate() {
   updateState.step = 'Stopping servers';
   const running = await runningInstanceNames();
   fs.writeFileSync(RESTART_FILE, JSON.stringify(running));
+  for (const inst of loadInstances()) if (running.includes(inst.name)) await workerAction(inst.panelPort, '/stop');
+  const stopDeadline = Date.now() + 3 * 60 * 1000;
+  while (Date.now() < stopDeadline && (await runningInstanceNames()).length) await new Promise((r) => setTimeout(r, 1500));
   await Promise.all([...workers.values()].map((w) => new Promise((resolve) => {
     const t = setTimeout(resolve, 45000);
     w.proc.once('exit', () => { clearTimeout(t); resolve(); });
@@ -786,10 +789,6 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname === '/api/update' && req.method === 'POST') {
     if (!canPanel(req, 'update')) { sendJson(res, 403, { error: 'not allowed to update' }); return; }
     if (updateState.running) { sendJson(res, 409, { error: 'an update is already running' }); return; }
-    if (loadSettings().updateRequiresStopped) {
-      const running = await runningInstanceNames();
-      if (running.length) { sendJson(res, 409, { error: `stop all servers first (running: ${running.join(', ')})` }); return; }
-    }
     updateState.running = true;
     updateState.error = null;
     sendJson(res, 202, { ok: true });
@@ -819,7 +818,6 @@ const server = http.createServer(async (req, res) => {
       checkedAt: versionCache?.at || null,
       checkError,
       updateAvailable: !!(localVersion && latestVersion && latestVersion !== localVersion),
-      updateRequiresStopped: loadSettings().updateRequiresStopped,
       canUpdate: canPanel(req, 'update'),
       running: await runningInstanceNames(),
     });
@@ -839,7 +837,6 @@ const server = http.createServer(async (req, res) => {
       let data;
       try { data = JSON.parse(body || '{}'); } catch (_) { sendJson(res, 400, { error: 'bad json' }); return; }
       const next = loadSettings();
-      if (typeof data.updateRequiresStopped === 'boolean') next.updateRequiresStopped = data.updateRequiresStopped;
       if (typeof data.trustProxy === 'boolean') next.trustProxy = data.trustProxy;
       saveSettings(next);
       sendJson(res, 200, next);

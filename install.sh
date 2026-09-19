@@ -10,6 +10,16 @@
 # anything piped into a shell - see the note at the bottom of the repo README).
 set -euo pipefail
 
+RESET_OWNER=0
+for arg in "$@"; do
+  case "$arg" in
+    --reset-owner) RESET_OWNER=1 ;;
+    -h|--help) printf 'Usage: install.sh [--reset-owner]\n  --reset-owner  set a new owner username and password on an existing install\n'; exit 0 ;;
+    *) printf 'Unknown option: %s\n' "$arg" >&2; exit 1 ;;
+  esac
+done
+[ "${MEOWMARISM_RESET_OWNER:-}" = "1" ] && RESET_OWNER=1
+
 if [ -t 1 ]; then
   C_PINK='\033[1;35m'; C_CYAN='\033[36m'; C_GREEN='\033[1;32m'
   C_YELLOW='\033[1;33m'; C_RED='\033[1;31m'; C_DIM='\033[2m'; C_BOLD='\033[1m'; C_RESET='\033[0m'
@@ -191,10 +201,10 @@ ALREADY_INSTALLED=0
 # yet is a real (if brief) open window on a real network; writing the
 # account straight into its store first means there is no such window at
 # all, not just a short one.
-if [ "$ALREADY_INSTALLED" = "0" ]; then
+if [ "$ALREADY_INSTALLED" = "0" ] || [ "$RESET_OWNER" = "1" ]; then
   if [ -t 0 ]; then TTY=/dev/stdin; else TTY=/dev/tty; fi
   if [ -r "$TTY" ]; then
-    step "Create the owner account (needed before the panel starts)"
+    if [ "$RESET_OWNER" = "1" ]; then step "Reset the owner account"; else step "Create the owner account (needed before the panel starts)"; fi
     ADMIN_USER=""; ADMIN_PASS=""
     while true; do
       printf "    Username (3-32 letters, digits, . _ -): "
@@ -217,17 +227,24 @@ if [ "$ALREADY_INSTALLED" = "0" ]; then
       if [ "$ADMIN_PASS" = "$ADMIN_PASS2" ]; then break; fi
       warn "The passwords don't match, try again."
     done
-    if printf '%s\n%s\n' "$ADMIN_USER" "$ADMIN_PASS" | node -e "
+    if printf '%s\n%s\n' "$ADMIN_USER" "$ADMIN_PASS" | RESET_OWNER="$RESET_OWNER" node -e "
       const { createUserStore } = require('${INSTALL_DIR}/panel/lib/db.js');
       const os = require('os'), path = require('path'), fs = require('fs');
       const [user, pass] = fs.readFileSync(0, 'utf8').split('\n');
       const store = createUserStore(path.join(os.homedir(), '.meowmarism-controller-users.json'));
+      if (process.env.RESET_OWNER === '1') {
+        store.resetOwner(user, pass);
+        try { fs.unlinkSync(path.join(os.homedir(), '.meowmarism-sessions.json')); } catch (_) {}
+        process.exit(0);
+      }
       process.exit(store.hasOwner() || store.upsertOwner(user, pass) ? 0 : 1);
     "; then
-      ok "Owner account '${ADMIN_USER}' created."
+      if [ "$RESET_OWNER" = "1" ]; then ok "Owner account is now '${ADMIN_USER}'. All sessions were signed out."; else ok "Owner account '${ADMIN_USER}' created."; fi
     else
-      die "couldn't create the owner account"
+      die "couldn't set the owner account"
     fi
+  elif [ "$RESET_OWNER" = "1" ]; then
+    die "--reset-owner needs a terminal to ask for the new password"
   else
     warn "No terminal to ask for a login in. Set one from the panel's front page before opening it up to your network."
   fi

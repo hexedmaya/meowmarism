@@ -103,6 +103,16 @@ function createUserStore(file) {
     save(users);
     return true;
   }
+  function resetOwner(username, password) {
+    const users = load().filter((u) => u.role === 'owner' || u.username !== username);
+    const owner = users.find((u) => u.role === 'owner');
+    const passwordHash = hashPassword(password);
+    if (owner) { owner.username = username; owner.passwordHash = passwordHash; }
+    else users.push({ username, passwordHash, role: 'owner', createdAt: Date.now() });
+    save(users);
+    return true;
+  }
+
   function setPassword(username, password) {
     const users = load();
     const target = users.find((u) => u.username === username);
@@ -131,7 +141,7 @@ function createUserStore(file) {
     const user = findUser(username);
     return user ? verifyPassword(password, user.passwordHash) : false;
   }
-  return { findUser, hasAnyUser, hasOwner, listUsers, upsertOwner, createMember, setPassword, setSettings, deleteMember, verifyUser };
+  return { findUser, hasAnyUser, hasOwner, listUsers, upsertOwner, resetOwner, createMember, setPassword, setSettings, deleteMember, verifyUser };
 }
 
 module.exports = { createUserStore, effectiveCaps, hasPanelCap, PANEL_CAPS, INSTANCE_CAPS, PRESETS };

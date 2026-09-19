@@ -247,10 +247,6 @@
     </div>
     <div class="card">
       <label class="toggle-row">
-        <span class="toggle"><input type="checkbox" id="set-updStopped" /><span class="toggle-track"></span><span class="toggle-thumb"></span></span>
-        <span>Require all servers to be stopped before updating</span>
-      </label>
-      <label class="toggle-row" style="margin-top:14px">
         <span class="toggle"><input type="checkbox" id="set-trustProxy" /><span class="toggle-track"></span><span class="toggle-thumb"></span></span>
         <span>This panel runs behind an HTTPS reverse proxy</span>
       </label>
@@ -481,13 +477,8 @@ async function loadSettingsPage() {
   const r = await fetch('/api/settings');
   if (!r.ok) return;
   const cfg = await r.json();
-  $('set-updStopped').checked = cfg.updateRequiresStopped;
   $('set-trustProxy').checked = !!cfg.trustProxy;
 }
-$('set-updStopped').addEventListener('change', async (e) => {
-  const r = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updateRequiresStopped: e.target.checked }) });
-  $('set-status').textContent = r.ok ? 'Saved.' : 'Could not save.';
-});
 $('set-trustProxy').addEventListener('change', async (e) => {
   const r = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trustProxy: e.target.checked }) });
   $('set-status').textContent = r.ok ? 'Saved.' : 'Could not save.';
@@ -510,18 +501,20 @@ async function loadUpdatePage() {
     : '<span class="badge ok">up to date</span>';
   $('upd-release-link').onclick = (e) => { e.preventDefault(); visitExternal(v.releaseUrl, 'the release notes on GitHub'); };
   $('upd-now').style.display = v.updateAvailable && currentPanel.update ? '' : 'none';
-  const blocked = v.updateRequiresStopped && v.running && v.running.length;
-  $('upd-now').disabled = !!blocked;
+  $('upd-now').disabled = false;
   try {
     const st = await (await fetch('/api/update-status')).json();
     const lr = st.lastResult;
     $('upd-warn').textContent = lr && lr.rolledBack ? window.t(`The last update to v${(lr.to || '').replace(/^v/, '')} failed (${lr.reason}) and was rolled back to v${lr.from}.`) : '';
   } catch (_) {}
-  $('upd-progress').textContent = blocked ? `Stop all servers before updating (running: ${v.running.join(', ')}).` : '';
+  $('upd-progress').textContent = '';
 }
 let currentRole = null;
 $('upd-now').addEventListener('click', async () => {
-  const ok = await modalConfirm('Update now?', 'Running servers are stopped briefly, the new release is installed, and the servers that were running start again on their own. The panel is unreachable for a few seconds.', 'Update');
+  const running = await fetch('/api/version').then((r) => r.json()).then((v) => v.running || []).catch(() => []);
+  const ok = await modalConfirm('Update now?', running.length
+    ? `meowmarism recommends stopping all servers before updating. If you continue, the running servers (${running.join(', ')}) are stopped, the panel waits until they have saved and shut down, installs the update and starts them again. The panel is unreachable for a few seconds.`
+    : 'The new release is installed. The panel is unreachable for a few seconds.', 'Continue');
   if (!ok) return;
   $('upd-now').disabled = true;
   $('upd-progress').textContent = 'Downloading and installing...';
