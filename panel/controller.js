@@ -19,12 +19,12 @@ const crypto = require('crypto');
 const { spawn, execFileSync, execFile } = require('child_process');
 
 const { INSTANCES_FILE } = require('./lib/config');
-const launchLib = require('./lib/launch');
+const launchLib = require('./runtime/launch');
 const net = require('net');
-const { checkDeletableDir } = require('./lib/safety');
+const { checkDeletableDir } = require('./core/modules/safety');
 const { parseCookies, currentSession, createSession, deleteSession, sessions, SESSION_COOKIE, SESSION_MAX_AGE_MS } = require('./lib/auth');
 const updateGuard = require('./lib/updateguard');
-const { createLoginLimiter } = require('./lib/ratelimit');
+const { createLoginLimiter } = require('./core/modules/ratelimit');
 const loginLimiter = createLoginLimiter();
 
 const RELEASES_REPO = 'meowmarism-official/meowmarism-lite';

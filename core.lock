@@ -1,7 +1,7 @@
 {
   "core": "meowmarism-core",
   "version": "0.0.0",
-  "commit": "49db0d4397dc3cb8dc26e2cc0fee83d0452b4e7f",
+  "commit": "6bec9b57b2f4793c6aee922b79b8fa90f45fe262",
   "files": [
     "LICENSE",
     "CONTRIBUTOR-AGREEMENT.md",
@@ -16,6 +16,12 @@
     "panel/core/brand/png/meowmarism-social-1280x640.png",
     "panel/core/brand/server-icon.png",
     "panel/core/tokens/tokens.css",
-    "panel/core/tokens/tokens.json"
+    "panel/core/tokens/tokens.json",
+    "panel/core/modules/backup.js",
+    "panel/core/modules/modrinth.js",
+    "panel/core/modules/ratelimit.js",
+    "panel/core/modules/runtime-contract.js",
+    "panel/core/modules/safety.js",
+    "panel/core/modules/scheduler.js"
   ]
 }

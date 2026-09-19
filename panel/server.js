@@ -8,9 +8,9 @@ const os = require('os');
 const crypto = require('crypto');
 
 const cfg = require('./lib/config');
-const launchLib = require('./lib/launch');
-const scheduler = require('./lib/scheduler');
-const { createModrinth } = require('./lib/modrinth');
+const launchLib = require('./runtime/launch');
+const scheduler = require('./core/modules/scheduler');
+const { createModrinth } = require('./core/modules/modrinth');
 const {
   SERVER_DIR, LOG_FILE, PROPERTIES_FILE, WORLD_DIR, BACKUP_DIR, CONFIG_FILE,
   HISTORY_FILE, METRICS_FILE, MODS_DIR, DISABLED_MODS_DIR, INSTANCE_LOADER, INSTANCE_MC_VERSION, WHITELIST_FILE, OPS_FILE,
@@ -750,22 +750,25 @@ function safeServerPath(rel) {
   return resolved;
 }
 
-const backupLib = require('./lib/backup');
+const backupLib = require('./core/modules/backup').createBackups({ SERVER_DIR, WORLD_DIR, BACKUP_DIR, panelConfig });
 const { BACKUP_EXT, BACKUP_NAME_RE, listBackups, pruneBackups, ensureBackupDir } = backupLib;
 const backupState = backupLib.state; // { backupInProgress, lastBackupAt, lastBackupError }
+
+const runtime = require('./runtime').createRuntime({
+  getChild: () => child,
+  getPhase: () => serverPhase,
+  start: startServer,
+  stop: stopServer,
+  restart: restartServer,
+  kill: forceStopServer,
+  command: sendCommand,
+});
 
 const backupDeps = {
   broadcast: (...a) => broadcast(...a),
   broadcastEvent: (...a) => broadcastEvent(...a),
   pushTimeline: (...a) => pushTimeline(...a),
-  sendCommand: (...a) => sendCommand(...a),
-  isLive: () => !!child && serverPhase === 'ready',
-  isRunning: () => !!child,
-  stopServerAndWait: () => new Promise((resolve) => {
-    if (!child) { resolve(); return; }
-    child.once('exit', () => resolve());
-    stopServer();
-  }),
+  runtime,
 };
 function createBackup(reason) { return backupLib.createBackup(reason, backupDeps); }
 function restoreBackup(name) { return backupLib.restoreBackup(name, backupDeps); }
@@ -789,23 +792,23 @@ setInterval(checkAutoRestart, 30000).unref();
 function runScheduledTask(task) {
   const a = task.action;
   let result = 'done';
-  const running = !!child;
+  const running = runtime.isRunning();
   if (a.type === 'backup') {
     Promise.resolve(createBackup('scheduled')).catch((err) => pushAudit('schedule.error', 'server', `${task.name} · ${err.message}`));
     result = 'backup started';
   } else if (a.type === 'start') {
-    result = running ? 'skipped (already running)' : (startServer() ? 'started' : 'could not start');
+    result = running ? 'skipped (already running)' : (runtime.start() ? 'started' : 'could not start');
   } else if (!running) {
     result = 'skipped (server not running)';
   } else if (a.type === 'restart') {
     scheduleRestart(a.warnSec || 0, `Scheduled: ${task.name}`, true);
     result = 'restart scheduled';
   } else if (a.type === 'stop') {
-    if (a.warnSec > 0) { sendCommand(`say Server stops in ${a.warnSec}s`); setTimeout(() => stopServer('scheduled'), a.warnSec * 1000); }
-    else stopServer('scheduled');
+    if (a.warnSec > 0) { runtime.command(`say Server stops in ${a.warnSec}s`); setTimeout(() => runtime.stop('scheduled'), a.warnSec * 1000); }
+    else runtime.stop('scheduled');
     result = 'stop requested';
   } else if (a.type === 'command') {
-    sendCommand(a.command);
+    runtime.command(a.command);
     result = 'command sent';
   }
   task.lastRunAt = Date.now();

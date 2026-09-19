@@ -50,8 +50,9 @@ panel/
 ├── index.html         worker frontend: the full dashboard for that instance
 ├── i18n.js            UI translations
 ├── lang/              translation files
-├── core/              design tokens and brand from meowmarism core (generated copy)
-└── lib/               config, auth, login throttling, backups, scheduler, Modrinth, launch options, update safety net
+├── core/              design, brand and shared modules (Modrinth, backups, scheduler, ...) from meowmarism core (generated copy)
+├── runtime/           how servers run in LITE: host process, Java and launch options
+└── lib/               config, accounts, sessions, update safety net
 ```
 
 You only ever run the controller directly. It spawns a `server.js` worker per running instance automatically, each with its own port, own console, own stats, nothing shared between instances. Open the controller's port to see the instance list, and click into any running instance to reach its own full dashboard at its own port.

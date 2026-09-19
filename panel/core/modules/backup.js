@@ -6,7 +6,9 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn, execFileSync } = require('child_process');
-const { SERVER_DIR, WORLD_DIR, BACKUP_DIR, panelConfig } = require('./config');
+
+// Pass { SERVER_DIR, WORLD_DIR, BACKUP_DIR, panelConfig }; returns the backup API.
+function createBackups({ SERVER_DIR, WORLD_DIR, BACKUP_DIR, panelConfig }) {
 
 let ZSTD_AVAILABLE = false;
 try { execFileSync('zstd', ['--version'], { stdio: 'ignore' }); ZSTD_AVAILABLE = true; } catch (_) {}
@@ -129,7 +131,7 @@ function diskFreeGB() {
 // backup finishing before moving on.
 let currentBackupPromise = null;
 
-// deps: { broadcast, broadcastEvent, pushTimeline, sendCommand, isLive: () => bool }
+// deps: { broadcast, broadcastEvent, pushTimeline, runtime }
 function createBackup(reason, deps) {
   if (currentBackupPromise) return currentBackupPromise;
   currentBackupPromise = runBackup(reason, deps).finally(() => { currentBackupPromise = null; });
@@ -160,8 +162,8 @@ function runBackup(reason, deps) {
     const dest = path.join(BACKUP_DIR, file);
     const startedAtMs = Date.now();
 
-    const live = deps.isLive();
-    if (live) { deps.sendCommand('save-off'); deps.sendCommand('save-all flush'); await delay(1500); }
+    const live = deps.runtime.isReady();
+    if (live) { deps.runtime.command('save-off'); deps.runtime.command('save-all flush'); await delay(1500); }
 
     deps.broadcast(`--- backing up world -> backups/${file} (${reason}, ${ZSTD_AVAILABLE ? 'zstd -T0' : 'gzip'}) ---`);
     const ok = await new Promise((resolve) => {
@@ -195,7 +197,7 @@ function runBackup(reason, deps) {
     });
 
     state.backupInProgress = false;
-    if (live) deps.sendCommand('save-on');
+    if (live) deps.runtime.command('save-on');
     return ok;
   })();
 }
@@ -205,7 +207,7 @@ function runBackup(reason, deps) {
 // succeeds instantly or throws before anything is touched - there's no
 // window where a failed safety copy leaves you with neither the old world
 // nor the new one, unlike the tar-based safety backup this replaced.
-// deps: { broadcast, pushTimeline, stopServerAndWait: async () => void, isRunning: () => bool }
+// deps: { broadcast, pushTimeline, runtime }
 const MAX_PRE_RESTORE_DIRS = 3;
 
 // Keeps only the last few world.pre-restore-* directories - each is a full
@@ -234,9 +236,9 @@ async function restoreBackup(name, deps) {
   // caller to retry.
   if (currentBackupPromise) { deps.broadcast('--- waiting for the current backup to finish before restoring ---'); await currentBackupPromise; }
 
-  if (deps.isRunning()) {
+  if (deps.runtime.isRunning()) {
     deps.broadcast('--- stopping server for world restore ---');
-    await deps.stopServerAndWait();
+    await deps.runtime.stopAndWait();
   }
 
   state.backupInProgress = true;
@@ -283,17 +285,20 @@ let autoBackupTimer = null;
 function rescheduleAutoBackup(deps) {
   if (autoBackupTimer) clearInterval(autoBackupTimer);
   const ms = Math.max(0.25, Number(panelConfig.backupIntervalHours) || 6) * 60 * 60 * 1000;
-  autoBackupTimer = setInterval(() => { if (deps.isRunning()) createBackup('auto', deps); }, ms).unref();
+  autoBackupTimer = setInterval(() => { if (deps.runtime.isRunning()) createBackup('auto', deps); }, ms).unref();
 }
 function startPruneTimer(deps) {
   // Only prune alongside an active server - while stopped or asleep nothing
   // is writing to world/, so there's nothing new to make room for.
-  setInterval(() => { if (!state.backupInProgress && deps.isRunning()) pruneBackups(); }, 30 * 60000).unref();
+  setInterval(() => { if (!state.backupInProgress && deps.runtime.isRunning()) pruneBackups(); }, 30 * 60000).unref();
 }
 
-module.exports = {
+return {
   BACKUP_EXT, BACKUP_NAME_RE, MIN_FREE_DISK_GB_FOR_BACKUP,
   state, ensureBackupDir, listBackups, pruneBackups,
   tarCreateArgs, tarExtractArgs, tarCreateSucceeded, tarExtractSucceeded,
   createBackup, restoreBackup, rescheduleAutoBackup, startPruneTimer,
 };
+}
+
+module.exports = { createBackups };
